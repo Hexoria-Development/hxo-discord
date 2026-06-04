@@ -1,0 +1,51 @@
+botToken: 'YOUR_BOT_TOKEN'
+guildId: 123456789012345678
+
+channels:
+  ticketChannelId: 123456789012345678
+  faqChannelId: 123456789012345678
+  memberLogChannelId: 123456789012345678
+  messageLogChannelId: 123456789012345678
+  voiceLogChannelId: 123456789012345678
+  countingChannelId: 123456789012345678
+
+database:
+  host: localhost
+  port: 3306
+  database: yourdatabase
+  username: root
+  password: yourpassword
+
+automod:
+  linkFilter:
+    enabled: false
+    allowedDomains:
+      - youtube.com              # gesamte Domain erlaubt
+      - discord.com              # gesamte Domain erlaubt
+      - twitch.tv/pumpeklein     # nur dieser Kanal erlaubt
+    ignoredChannels:
+      - 123456789012345678
+
+  chatSpam:
+    enabled: false
+    maxMessages: 5          # Maximale Nachrichten im Zeitfenster
+    timeWindowSeconds: 5    # Zeitfenster in Sekunden
+    timeoutSeconds: 60      # Timeout-Dauer (0 = kein Timeout)
+    ignoredChannels:
+      - 123456789012345678
+
+  voiceSpam:
+    enabled: false
+    maxEvents: 5            # Maximale Join/Leave-Aktionen im Zeitfenster
+    timeWindowSeconds: 5    # Zeitfenster in Sekunden
+
+selfRoles:
+  - roleId: 123456789012345678
+    label: "Server-Pings"
+    emoji: "📢"
+    description: "Erhalte Benachrichtigungen für Server-Ankündigungen"
+  - roleId: 123456789012345678
+    label: "Event-Pings"
+    emoji: "🎉"
+    description: "Werde bei Events benachrichtigt"
+
