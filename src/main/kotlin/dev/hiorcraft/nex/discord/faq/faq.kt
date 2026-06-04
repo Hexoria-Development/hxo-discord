@@ -14,7 +14,7 @@ enum class Faq(
 
             **So gehst du vor:**
             1. Öffne ein Ticket über den Button im Support-Channel
-            2. Wähle die Kategorie **⚖️ Entbannungsantrag**
+            2. Wähle die Kategorie **⚖️ Unbann**
             3. Gib deine **Punish-ID**, deinen **Minecraft-Namen** und eine ehrliche **Begründung** an
 
             Bitte beachte: Unvollständige oder unehrliche Anträge werden abgelehnt.
@@ -29,12 +29,8 @@ enum class Faq(
 
             1. Geh in den **Support-Channel** auf unserem Discord
             2. Klicke auf den Button **🎫 Ticket öffnen**
-            3. Wähle die passende Kategorie aus:
-               • 🎫 **Support** – allgemeine Fragen & Anliegen
-               • 🚨 **Report** – Spieler oder Verstöße melden
-               • 🏡 **Claim** – Probleme mit deinem Grundstück
-               • 🐛 **Bug Report** – Fehler im System melden
-               • ⚖️ **Entbannungsantrag** – Bann anfechten
+            3. Wähle die passende Kategorie aus – eine Übersicht aller Ticket-Typen findest du auf unserer Webseite:
+               **https://hexoria.net/Support/**
 
             Ein Teammitglied wird sich so schnell wie möglich um dein Anliegen kümmern.
             Bitte öffne **kein Duplikat-Ticket**, wenn du bereits eines offen hast.
@@ -57,30 +53,11 @@ enum class Faq(
             Unwissenheit schützt nicht vor Strafe – bitte lies das Regelwerk durch!
         """.trimIndent()
     ),
-    SERVER_MODPACK(
-        id = "server-modpack",
-        question = "Welches Modpack nutzt der Server?",
-        answer = """
-            Unser Server läuft mit einem eigenen Modpack.
-
-            **So installierst du das Modpack:**
-            1. Lade den **All of Create - Aeronautics** über curseForge herunter
-            2. Installiere die passende Version
-            3. Verbinde dich mit der Server-IP: **124:787**
-
-            Stelle sicher, dass du die **exakt gleiche Version** wie der Server verwendest – ältere oder neuere Versionen können zu Verbindungsproblemen führen.
-
-            Bei Problemen mit der Installation öffne gerne ein **🎫 Support-Ticket**.
-        """.trimIndent()
-    ),
     CONNECTION_ISSUES(
         id = "problem-connection",
         question = "Ich kann mich nicht verbinden – was tun?",
         answer = """
             Du hast Probleme, dich mit dem Server zu verbinden? Hier sind die häufigsten Ursachen:
-
-            **1. Falsche Modpack-Version**
-            Stelle sicher, dass du exakt die gleiche Version wie der Server verwendest.
 
             **2. Server in Wartung**
             Prüfe den Channel **#📢ankündigungen** – vielleicht ist der Server gerade offline.
@@ -91,7 +68,7 @@ enum class Faq(
             • Deaktiviere temporär deine Firewall / VPN
 
             **4. Falsche Server-IP**
-            Die korrekte IP lautet: **124:787**
+            Die korrekte IP lautet: **play.hexoria.net**
 
             Hilft nichts davon? Öffne ein **🎫 Support-Ticket** und teile deinen Log (F3 + C oder Logdatei).
         """.trimIndent()
@@ -104,7 +81,6 @@ enum class Faq(
 
             **Wo findest du aktuelle Infos?**
             • Channel **#📢ankündigungen** – offizielle Updates vom Team
-            • Channel **#🔧status** – Live-Status des Servers
 
             Während der Wartung kannst du dich leider nicht verbinden.
             Wir versuchen, Ausfallzeiten so kurz wie möglich zu halten.
@@ -138,19 +114,12 @@ enum class Faq(
         question = "Wie trete ich dem Server bei?",
         answer = """
             Willkommen! So wirst du Teil unserer Community:
-
-            **Schritt 1 – Discord verifizieren**
-            Verifiziere dich in unserem Discord, um Zugang zu allen Channels zu erhalten.
-
-            **Schritt 2 – Modpack installieren**
-            Installiere das Modpack **All of Create - Aeronautics** über deinen Launcher.
-            Eine genaue Anleitung findest du in der FAQ unter **"Welches Modpack nutzt der Server?"**
-
-            **Schritt 3 – Server beitreten**
-            Verbinde dich mit der IP: **124:787**
-
-            **Schritt 4 – Regelwerk lesen**
-            Bitte lies das Regelwerk im Channel **#📜regelwerk** durch, bevor du spielst.
+            
+            **Schritt 1 – Regelwerk lesen**
+            Bitte lies das Regelwerk auf der Webseite: https://hexoria.net/Regeln
+            
+            **Schritt 2 – Server beitreten**
+            Verbinde dich mit der IP: **play.hexoria.net**
 
             Bei Fragen stehen wir dir gerne per **🎫 Support-Ticket** zur Verfügung. Viel Spaß!
         """.trimIndent()
@@ -175,23 +144,6 @@ enum class Faq(
             • Öffne ein **Ticket** statt im allgemeinen Chat zu fragen – so bekommst du schneller Hilfe
             • Doppelposting / mehrere Tickets für das gleiche Thema verlangsamt uns
             • Sei geduldig – unser Team ist ehrenamtlich tätig
-        """.trimIndent()
-    ),
-    MISSING_INFORMATION(
-        id = "missing-information",
-        question = "Ich vermisse Informationen – wo finde ich sie?",
-        answer = """
-            Du suchst etwas und findest es nicht? Hier sind die wichtigsten Anlaufstellen:
-
-            📢 **#ankündigungen** – News und Updates vom Team
-            📜 **#regelw** – Alle Serverregeln
-            🔧 **#status** – Aktueller Serverstatus
-            ℹ️ **#faq** - Fragen die geantworte wurden
-
-            **Noch nicht gefunden?**
-            Öffne ein **🎫 Support-Ticket** – wir helfen dir gerne weiter und ergänzen die Infos bei Bedarf.
-
-            Du kannst auch Vorschläge für fehlende Dokumentation im **#💡vorschläge**-Channel einreichen.
         """.trimIndent()
     )
 }

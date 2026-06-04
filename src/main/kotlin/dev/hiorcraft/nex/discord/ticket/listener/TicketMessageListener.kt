@@ -12,6 +12,7 @@ import java.time.LocalDateTime
 class TicketMessageListener(
     private val ticketService: TicketService,
     private val messageRepository: TicketMessageRepository,
+    private val deadlineService: TicketDeadlineService,
     private val coroutineScope: CoroutineScope,
 ) : ListenerAdapter() {
 
@@ -21,6 +22,12 @@ class TicketMessageListener(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: return@launch
+
+            deadlineService.cancelIfAuthorResponded(
+                threadId      = event.channel.idLong,
+                senderId      = event.author.idLong,
+                ticketAuthorId = ticket.authorId,
+            )
 
             val attachments = event.message.attachments
                 .joinToString(",") { it.url }

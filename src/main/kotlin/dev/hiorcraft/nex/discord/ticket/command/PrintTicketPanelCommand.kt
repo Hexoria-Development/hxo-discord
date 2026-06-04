@@ -47,7 +47,6 @@ class PrintTicketPanelCommand(
 
         val row = ActionRow.of(
             Button.success("ticket:panel:open", "🎫 Ticket öffnen"),
-            Button.secondary("verify:panel:open", "✅ Verify"),
         )
 
         event.channel.sendMessageEmbeds(panelEmbed)
