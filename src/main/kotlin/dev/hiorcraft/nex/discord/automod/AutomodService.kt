@@ -5,6 +5,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -20,6 +22,8 @@ class AutomodService(
     private val automodRepository: AutomodRepository,
     private val automodDeleteTracker: AutomodDeleteTracker,
     private val coroutineScope: CoroutineScope,
+    @Autowired(required = false)
+    private val automodLogChannel: TextChannel?,
 ) {
 
     fun handleMessageAction(
@@ -38,6 +42,7 @@ class AutomodService(
             }
 
             sendDm(member, action, reason, timeoutSeconds, message.guild.name)
+            postToLogChannel(member, action, reason, timeoutSeconds, message.channel.name)
 
             automodRepository.log(
                 guildId        = message.guild.idLong,
@@ -60,6 +65,7 @@ class AutomodService(
     ) {
         coroutineScope.launch {
             sendDm(member, AutomodAction.VOICE_SPAM, reason, 0, guildName)
+            postToLogChannel(member, AutomodAction.VOICE_SPAM, reason, 0, channelName = null)
 
             automodRepository.log(
                 guildId     = guildId,
@@ -71,6 +77,27 @@ class AutomodService(
                 reason      = reason,
             )
         }
+    }
+
+    private fun postToLogChannel(
+        member: Member,
+        action: AutomodAction,
+        reason: String,
+        timeoutSeconds: Long,
+        channelName: String?,
+    ) {
+        val logChannel = automodLogChannel ?: return
+        logChannel.sendMessageEmbeds(embed {
+            setTitle("🛡️ Automod – ${action.label}")
+            setColor(COLOR_WARNING)
+            setTimestamp(Instant.now())
+            addField("User", "${member.asMention} (`${member.user.name}`)", true)
+            if (channelName != null) addField("Channel", "#$channelName", true)
+            addField("Aktion", action.label, true)
+            addField("Grund", reason, false)
+            if (timeoutSeconds > 0) addField("Timeout", "$timeoutSeconds Sekunden", true)
+            setThumbnail(member.user.effectiveAvatarUrl)
+        }).queue(null) { }
     }
 
     private fun sendDm(member: Member, action: AutomodAction, reason: String, timeoutSeconds: Long, guildName: String) {

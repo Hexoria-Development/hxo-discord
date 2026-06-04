@@ -31,6 +31,7 @@ data class ChannelConfig(
     val messageLogChannelId: Long = 0L,
     val voiceLogChannelId: Long = 0L,
     val countingChannelId: Long = 0L,
+    val automodLogChannelId: Long = 0L,
 )
 
 @Serializable

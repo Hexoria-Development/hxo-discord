@@ -8,6 +8,7 @@ channels:
   messageLogChannelId: 123456789012345678
   voiceLogChannelId: 123456789012345678
   countingChannelId: 123456789012345678
+  automodLogChannelId: 123456789012345678
 
 database:
   host: localhost

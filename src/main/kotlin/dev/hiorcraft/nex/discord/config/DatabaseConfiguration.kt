@@ -29,6 +29,33 @@ class DatabaseConfiguration {
         return jdbc
     }
 
+    private fun migrateTicketsTable(jdbc: JdbcTemplate) {
+        jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS tickets (
+                ticket_id        VARCHAR(36)  NOT NULL,
+                thread_id        BIGINT       NOT NULL,
+                guild_id         BIGINT       NOT NULL,
+                author_id        BIGINT       NOT NULL,
+                author_name      VARCHAR(255) NOT NULL,
+                author_avatar    VARCHAR(255),
+                ticket_type      VARCHAR(50)  NOT NULL,
+                ticket_data      TEXT         NOT NULL,
+                internal_ticket_id BIGINT,
+                created_at       DATETIME     NOT NULL,
+                claimed_by_id    BIGINT,
+                claimed_by_name  VARCHAR(255),
+                closed_at        DATETIME,
+                closed_by_id     BIGINT,
+                closed_by_name   VARCHAR(255),
+                closed_by_avatar VARCHAR(255),
+                closed_reason    TEXT,
+                PRIMARY KEY (ticket_id),
+                INDEX idx_t_thread_id (thread_id),
+                INDEX idx_t_author_id (author_id)
+            )
+        """.trimIndent())
+    }
+
     private fun initSchema(jdbc: JdbcTemplate) {
         migrateTicketsTable(jdbc)
 

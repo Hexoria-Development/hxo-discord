@@ -23,4 +23,17 @@ class ChannelProvider(private val jda: JDA) {
             null
         }
     }
+
+    @Bean
+    fun automodLogChannel(): TextChannel? {
+        val channelId = botConfig.channels.automodLogChannelId
+        if (channelId == 0L) {
+            logger.warn("Kein Automod-Log-Channel konfiguriert (channels.automodLogChannelId = 0).")
+            return null
+        }
+        return jda.getTextChannelById(channelId) ?: run {
+            logger.error("Automod-Log-Channel mit ID $channelId nicht gefunden!")
+            null
+        }
+    }
 }

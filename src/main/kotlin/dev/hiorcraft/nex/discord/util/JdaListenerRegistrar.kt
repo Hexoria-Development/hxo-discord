@@ -50,12 +50,18 @@ class JdaListenerRegistrar(
             Commands.slash("add", "Fügt einen User zum Ticket hinzu")
                 .addOption(OptionType.USER, "user", "Der User, der hinzugefügt werden soll", true),
 
+            Commands.slash("add-silent", "Fügt einen User still zum Ticket hinzu (ohne Benachrichtigung, nur Admins)")
+                .addOption(OptionType.USER, "user", "Der User, der hinzugefügt werden soll", true),
+
             Commands.slash("remove", "Entfernt einen User aus dem Ticket")
                 .addOption(OptionType.USER, "user", "Der User, der entfernt werden soll", true),
 
             Commands.slash("ticket-panel", "Postet das Ticket-Panel (nur Admins)"),
 
             Commands.slash("missing-information", "Informiert den Ticket-Ersteller über fehlende Angaben"),
+
+            Commands.slash("deadline", "Setzt einen Antwort-Timer – Ticket wird automatisch geschlossen wenn keine Antwort kommt")
+                .addOption(OptionType.INTEGER, "minuten", "Zeit in Minuten bis das Ticket automatisch geschlossen wird", true),
 
             Commands.slash("selfrole-panel", "Postet das Self-Role Panel im aktuellen Channel (nur Admins)"),
 
@@ -96,16 +102,17 @@ class JdaListenerRegistrar(
         }
 
         val panelEmbed = embed {
-            setTitle("🎫 Support")
+            setTitle("Ticket erstellen")
             setDescription(
                 """
-                Willkommen in Beim Support
-                Erstelle ein Support-Ticket
-                Wenn du ein Anliegen hast, dann kannst du hier ein Ticket öffnen und unsere Teammitglieder werden dir dann weiterhelfen.
+                Du möchtest einen Spieler bzw. ein Problem melden oder einen Entbannungsantrag für den Server erstellen, so kannst du hier ein Ticket erstellen.
 
-                Dafür musst du einfach aus dem Menü unten eine Option wählen, woraufhin ein Channel geöffnet wird. Bitte beschreibe dort dein Anliegen.
+                Bitte mache dich vorher mit den unterschiedlichen Tickettypen vertraut!
+                Die Übersicht findest du hier: https://hexoria.net/Support
 
-                Bei **Verify** ist noch nicht fertig!
+                Allgemeine Fragen sollten in den dafür vorgesehenen öffentlichen Kanälen gestellt werden.
+
+                Wir bemühen uns die Tickets schnellstmöglich zu bearbeiten, jedoch arbeitet das gesamte Team freiwillig, und gerade unter der Woche kann die Bearbeitung der Tickets länger dauern.
                 """.trimIndent()
             )
             setColor(COLOR_INFO)
@@ -115,7 +122,6 @@ class JdaListenerRegistrar(
 
         val row = ActionRow.of(
             Button.success("ticket:panel:open", "🎫 Ticket öffnen"),
-            Button.secondary("verify:panel:open", "✅ Verify"),
         )
 
         channel.sendMessageEmbeds(panelEmbed).setComponents(row).queue {
