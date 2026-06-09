@@ -40,6 +40,10 @@ automod:
     maxEvents: 5            # Maximale Join/Leave-Aktionen im Zeitfenster
     timeWindowSeconds: 5    # Zeitfenster in Sekunden
 
+autoRoles:
+  - 123456789012345678   # Rolle, die beim Betreten automatisch vergeben wird
+  - 123456789012345679   # weitere Auto-Rolle (beliebig viele möglich)
+
 selfRoles:
   - roleId: 123456789012345678
     label: "Server-Pings"
