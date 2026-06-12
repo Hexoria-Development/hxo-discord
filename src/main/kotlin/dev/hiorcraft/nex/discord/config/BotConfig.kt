@@ -21,6 +21,7 @@ data class BotConfig(
     val database: DatabaseConfig = DatabaseConfig(),
     val automod: AutomodConfig = AutomodConfig(),
     val selfRoles: List<SelfRoleEntry> = emptyList(),
+    val autoRoles: List<Long> = emptyList(),
 )
 
 @Serializable
