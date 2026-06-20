@@ -1,1 +1,1 @@
-# nex-discord
+# hxo-discord

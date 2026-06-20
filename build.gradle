@@ -6,7 +6,7 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.2.0'
 }
 
-group = "dev.hiorcraft.nex.discord"
+group = "dev.hexoria.hxo.discord"
 version = findProperty("version") as String
 
 repositories {
