@@ -4,7 +4,8 @@ guildId: 123456789012345678
 channels:
   ticketChannelId: 123456789012345678
   faqChannelId: 123456789012345678
-  memberLogChannelId: 123456789012345678
+  memberLogChannelId: 123456789012345678   # Join, Leave, Ban, Unban, Nickname, Username
+  roleLogChannelId: 123456789012345678     # Rollen hinzugefügt / entfernt
   messageLogChannelId: 123456789012345678
   voiceLogChannelId: 123456789012345678
   countingChannelId: 123456789012345678

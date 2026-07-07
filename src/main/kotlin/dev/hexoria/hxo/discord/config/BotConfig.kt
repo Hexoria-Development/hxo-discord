@@ -31,6 +31,7 @@ data class ChannelConfig(
     val ticketChannelId: Long = 0L,
     val faqChannelId: Long = 0L,
     val memberLogChannelId: Long = 0L,
+    val roleLogChannelId: Long = 0L,
     val messageLogChannelId: Long = 0L,
     val voiceLogChannelId: Long = 0L,
     val countingChannelId: Long = 0L,
