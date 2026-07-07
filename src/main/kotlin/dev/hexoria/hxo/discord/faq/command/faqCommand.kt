@@ -55,17 +55,12 @@ class FaqCommand : ListenerAdapter() {
             if (file != null) setImage("attachment://${file.name}")
         }
 
-        if (user != null) {
-            val message = event.channel.sendMessage(user.asMention).setEmbeds(embedMsg)
-            if (file != null) message.addFiles(FileUpload.fromData(file))
-            message.queue()
+        val reply = if (user != null) {
+            event.reply(user.asMention).addEmbeds(embedMsg)
         } else {
-            val message = event.channel.sendMessageEmbeds(embedMsg)
-            if (file != null) message.addFiles(FileUpload.fromData(file))
-            message.queue()
+            event.replyEmbeds(embedMsg)
         }
-
-        event.replyEmbeds(successEmbed("FAQ gesendet", "Die FAQ wurde erfolgreich gepostet."))
-            .setEphemeral(true).queue()
+        if (file != null) reply.addFiles(FileUpload.fromData(file))
+        reply.queue()
     }
 }
