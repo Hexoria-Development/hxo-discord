@@ -249,6 +249,38 @@ enum class TicketType(
             event.getValue("event_name")?.asString?.let { put("event_name", it) }
         }
     },
+    CONTENT_SUPPORT(
+        id = "content_support",
+        displayName = "Content Support",
+        description = "Support für Content Creator.",
+        emoji = "🎬",
+        closeReasons = defaultCloseReasons,
+        viewPermission = DiscordPermission.TICKET_CONTENT_VIEW,
+    ) {
+        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+            textInput {
+                id = "content_type"
+                label = "Art des Contents"
+                style = TextInputStyle.SHORT
+                placeholder = "z. B. Video, Stream, Social Media ..."
+                lengthRange = 1..100
+                required = true
+            }
+            textInput {
+                id = "description"
+                label = "Dein Anliegen"
+                style = TextInputStyle.PARAGRAPH
+                placeholder = "Beschreibe dein Anliegen ..."
+                lengthRange = 20..1000
+                required = true
+            }
+        }
+
+        override fun extractFormData(event: ModalInteractionEvent) = buildMap {
+            put("description", event.getValue("description")?.asString ?: "")
+            event.getValue("content_type")?.asString?.let { put("content_type", it) }
+        }
+    },
     TEAM_REPORT(
         id = "team_report",
         displayName = "Team Report",

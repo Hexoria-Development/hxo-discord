@@ -234,6 +234,13 @@ class TicketButtonListener(
             return
         }
 
+        if (type == TicketType.CONTENT_SUPPORT && !event.member.hasPermission(DiscordPermission.TICKET_CONTENT_CREATE)) {
+            event.replyEmbeds(
+                errorEmbed("Kein Zugriff", "Nur Content Creator können ein Content Support Ticket erstellen.")
+            ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
+            return
+        }
+
         event.replyModal(type.createModal()).queue()
     }
 

@@ -204,6 +204,16 @@ private fun buildTicketDescription(type: TicketType, authorId: Long, data: Map<S
             appendLine("**Begründung:**")
             append(data["description"] ?: "")
         }
+        TicketType.CONTENT_SUPPORT -> buildString {
+            appendLine("Willkommen <@$authorId>! Dein Content Support Ticket wurde erstellt.")
+            appendLine()
+            appendLine("**Art des Contents:** ${data["content_type"] ?: "–"}")
+            appendLine()
+            appendLine("**Anliegen:**")
+            appendLine(data["description"] ?: "")
+            appendLine()
+            append("Das Management wird sich so schnell wie möglich um dein Anliegen kümmern.")
+        }
         else -> buildString {
             appendLine("Willkommen <@$authorId>! Dein Ticket wurde erstellt.")
             appendLine()
