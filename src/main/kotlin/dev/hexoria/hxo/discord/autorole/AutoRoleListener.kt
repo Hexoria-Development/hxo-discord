@@ -18,16 +18,16 @@ class AutoRoleListener : ListenerAdapter() {
         val guild = event.guild
         val member = event.member
 
-        roleIds.forEach { roleId ->
-            val role = guild.getRoleById(roleId)
-            if (role == null) {
-                logger.warn("AutoRole: Rolle mit ID $roleId nicht gefunden – übersprungen.")
-                return@forEach
+        for (roleId in roleIds) {
+            val role = guild.getRoleById(roleId) ?: run {
+                logger.warn("AutoRole: Rolle $roleId nicht gefunden – übersprungen.")
+                continue
             }
-            guild.addRoleToMember(member, role).queue(
-                { logger.info("AutoRole: Rolle '${role.name}' an ${member.user.name} vergeben.") },
-                { err -> logger.error("AutoRole: Fehler beim Vergeben von '${role.name}' an ${member.user.name}: ${err.message}") }
-            )
+            guild.addRoleToMember(member, role).queue(null) {
+                logger.warn("AutoRole: Rolle ${role.name} konnte nicht zugewiesen werden: ${it.message}")
+            }
         }
+
+        logger.info("AutoRole: ${roleIds.size} Rolle(n) an ${member.user.name} vergeben.")
     }
 }
