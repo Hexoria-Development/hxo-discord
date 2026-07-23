@@ -9,7 +9,6 @@ import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 @Component
 class MissingInformationCommand(
@@ -21,13 +20,13 @@ class MissingInformationCommand(
         if (event.name != "missing-information") return
 
         if (!event.member.hasPermission(DiscordPermission.TICKET_CLOSE)) {
-            event.replyEmbeds(errorEmbed("Keine Berechtigung", "Nur Support-Mitglieder können diesen Befehl nutzen."))
+            event.replyContainers(errorContainer("Keine Berechtigung", "Nur Support-Mitglieder können diesen Befehl nutzen."))
                 .setEphemeral(true).queue()
             return
         }
 
         if (!event.channel.type.isThread) {
-            event.replyEmbeds(errorEmbed("Falscher Channel", "Dieser Befehl kann nur in Ticket-Channels verwendet werden."))
+            event.replyContainers(errorContainer("Falscher Channel", "Dieser Befehl kann nur in Ticket-Channels verwendet werden."))
                 .setEphemeral(true).queue()
             return
         }
@@ -36,40 +35,37 @@ class MissingInformationCommand(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.editContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             if (ticket.isClosed()) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Ticket geschlossen", "Dieses Ticket ist bereits geschlossen.")
+                event.hook.editContainers(
+                    errorContainer("Ticket geschlossen", "Dieses Ticket ist bereits geschlossen.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
-            event.channel.asThreadChannel().sendMessage("<@${ticket.authorId}>")
-                .setEmbeds(embed {
-                    setTitle("⚠️ Fehlende Informationen")
-                    setDescription(
-                        """
-                        Dein Ticket kann aktuell nicht bearbeitet werden, da **wichtige Informationen fehlen**.
+            event.channel.asThreadChannel().sendContainers(container {
+                accentColor = COLOR_WARNING
+                header("⚠️ Fehlende Informationen")
+                text(
+                    """
+                    <@${ticket.authorId}>, dein Ticket kann aktuell nicht bearbeitet werden, da **wichtige Informationen fehlen**.
 
-                        Bitte ergänze deine Angaben, damit wir dir weiterhelfen können.
-                        Das Ticket wird erst weiterbearbeitet, sobald alle Informationen vorliegen.
-
-                        **Folgende Informationen könnten fehlen:**
-                        - Spieler-Name
-                        - Koordinaten
-                        - Problembeschreibung
-                        - Ungenaue Angaben
-                        """.trimIndent()
-                    )
-                    setColor(COLOR_WARNING)
-                    setTimestamp(Instant.now())
-                    setFooter("Ticket #${ticket.internalTicketId}")
-                }).queue()
+                    Bitte ergänze deine Angaben, damit wir dir weiterhelfen können.
+                    Das Ticket wird erst weiterbearbeitet, sobald alle Informationen vorliegen.
+                    """.trimIndent()
+                )
+                divider()
+                field(
+                    "Folgende Informationen könnten fehlen",
+                    "- Spieler-Name\n- Koordinaten\n- Problembeschreibung\n- Ungenaue Angaben",
+                )
+                footer("Ticket #${ticket.internalTicketId}", now)
+            }).queue()
 
             event.hook.deleteOriginal().queue()
         }

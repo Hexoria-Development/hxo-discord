@@ -2,9 +2,9 @@ package dev.hexoria.hxo.discord.util
 
 import dev.hexoria.hxo.discord.config.botConfig
 import dev.hexoria.hxo.discord.faq.Faq
+import dev.hexoria.hxo.discord.ticket.ticketPanelContainer
+import dev.hexoria.hxo.discord.voice.voiceInfoContainer
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.components.actionrow.ActionRow
-import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 @Component
 class JdaListenerRegistrar(
@@ -67,6 +66,8 @@ class JdaListenerRegistrar(
 
             Commands.slash("reactionrole-panel", "Postet das Reaction-Role Panel im aktuellen Channel (nur Admins)"),
 
+            Commands.slash("voice-panel", "Postet die Willkommens-Nachricht des Voice-Systems (nur Admins)"),
+
             Commands.slash("faq", "Häufig gestellte Fragen anzeigen")
                 .addOptions(
                     OptionData(OptionType.STRING, "question", "Die Frage, die angezeigt werden soll", true)
@@ -78,6 +79,34 @@ class JdaListenerRegistrar(
         }
 
         autoPostTicketPanel()
+        autoPostVoicePanel()
+    }
+
+    private fun autoPostVoicePanel() {
+        val config = botConfig.tempVoice
+        if (!config.enabled || config.infoChannelId == 0L) return
+
+        val channel = jda.getTextChannelById(config.infoChannelId) ?: run {
+            logger.error("Voice-Info-Channel mit ID ${config.infoChannelId} nicht gefunden!")
+            return
+        }
+
+        val history = try {
+            channel.history.retrievePast(10).complete()
+        } catch (e: Exception) {
+            logger.error("Fehler beim Abrufen der Channel-History: ${e.message}")
+            return
+        }
+
+        val selfId = jda.selfUser.idLong
+        if (history.any { it.author.idLong == selfId && it.components.isNotEmpty() }) {
+            logger.info("Voice-Panel bereits im Channel vorhanden – kein erneutes Posten.")
+            return
+        }
+
+        channel.sendContainers(voiceInfoContainer(config.creatorChannelId)).queue {
+            logger.info("Voice-Panel automatisch in #${channel.name} gepostet.")
+        }
     }
 
     private fun autoPostTicketPanel() {
@@ -103,30 +132,7 @@ class JdaListenerRegistrar(
             return
         }
 
-        val panelEmbed = embed {
-            setTitle("Ticket erstellen")
-            setDescription(
-                """
-                Du möchtest einen Spieler bzw. ein Problem melden oder einen Entbannungsantrag für den Server erstellen, so kannst du hier ein Ticket erstellen.
-
-                Bitte mache dich vorher mit den unterschiedlichen Tickettypen vertraut!
-                Die Übersicht findest du hier: https://hexoria.net/Support
-
-                Allgemeine Fragen sollten in den dafür vorgesehenen öffentlichen Kanälen gestellt werden.
-
-                Wir bemühen uns die Tickets schnellstmöglich zu bearbeiten, jedoch arbeitet das gesamte Team freiwillig, und gerade unter der Woche kann die Bearbeitung der Tickets länger dauern.
-                """.trimIndent()
-            )
-            setColor(COLOR_INFO)
-            setTimestamp(Instant.now())
-            setFooter("Support-System")
-        }
-
-        val row = ActionRow.of(
-            Button.success("ticket:panel:open", "🎫 Ticket öffnen"),
-        )
-
-        channel.sendMessageEmbeds(panelEmbed).setComponents(row).queue {
+        channel.sendContainers(ticketPanelContainer()).queue {
             logger.info("Ticket-Panel automatisch in #${channel.name} gepostet.")
         }
     }

@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 enum class AutomodAction(val label: String) {
@@ -87,32 +86,30 @@ class AutomodService(
         channelName: String?,
     ) {
         val logChannel = automodLogChannel ?: return
-        logChannel.sendMessageEmbeds(embed {
-            setTitle("🛡️ Automod – ${action.label}")
-            setColor(COLOR_WARNING)
-            setTimestamp(Instant.now())
-            addField("User", "${member.asMention} (`${member.user.name}`)", true)
-            if (channelName != null) addField("Channel", "#$channelName", true)
-            addField("Aktion", action.label, true)
-            addField("Grund", reason, false)
-            if (timeoutSeconds > 0) addField("Timeout", "$timeoutSeconds Sekunden", true)
-            setThumbnail(member.user.effectiveAvatarUrl)
+        logChannel.sendSilentContainers(container {
+            accentColor = COLOR_WARNING
+            section(member.user.effectiveAvatarUrl) {
+                header("🛡️ Automod – ${action.label}")
+                text("${member.asMention} (`${member.user.name}`)")
+            }
+            divider()
+            if (channelName != null) field("Channel", "#$channelName")
+            field("Aktion", action.label)
+            field("Grund", reason)
+            if (timeoutSeconds > 0) field("Timeout", "$timeoutSeconds Sekunden")
+            timestamp()
         }).queue(null) { }
     }
 
     private fun sendDm(member: Member, action: AutomodAction, reason: String, timeoutSeconds: Long, guildName: String) {
-        val description = buildString {
-            appendLine("**Grund:** $reason")
-            if (timeoutSeconds > 0) appendLine("**Timeout:** ${timeoutSeconds} Sekunden")
-            appendLine("**Server:** $guildName")
-        }
-
         member.user.openPrivateChannel().queue({ channel ->
-            channel.sendMessageEmbeds(embed {
-                setTitle(action.label)
-                setDescription(description.trim())
-                setColor(COLOR_ERROR)
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_ERROR
+                header(action.label)
+                field("Grund", reason)
+                if (timeoutSeconds > 0) field("Timeout", "$timeoutSeconds Sekunden")
+                field("Server", guildName)
+                timestamp()
             }).queue(null) { }
         }, { })
     }

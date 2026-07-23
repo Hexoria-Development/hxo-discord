@@ -34,15 +34,15 @@ class TicketCloseReasonListener(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.editContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             if (ticket.isClosed()) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Bereits geschlossen", "Dieses Ticket ist bereits geschlossen.")
+                event.hook.editContainers(
+                    errorContainer("Bereits geschlossen", "Dieses Ticket ist bereits geschlossen.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
@@ -56,8 +56,8 @@ class TicketCloseReasonListener(
                 reason         = reason,
             )
 
-            event.hook.editOriginalEmbeds(
-                successEmbed("Ticket geschlossen", "Das Ticket wurde erfolgreich geschlossen.")
+            event.hook.editContainers(
+                successContainer("Ticket geschlossen", "Das Ticket wurde erfolgreich geschlossen.")
             ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
         }
     }

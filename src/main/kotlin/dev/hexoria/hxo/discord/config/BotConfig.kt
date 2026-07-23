@@ -6,6 +6,7 @@ import com.charleskorn.kaml.decodeFromStream
 import dev.hexoria.hxo.discord.automod.AutomodConfig
 import dev.hexoria.hxo.discord.selfrole.ReactionRoleEntry
 import dev.hexoria.hxo.discord.selfrole.SelfRoleEntry
+import dev.hexoria.hxo.discord.voice.TempVoiceConfig
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.Path
@@ -24,6 +25,7 @@ data class BotConfig(
     val selfRoles: List<SelfRoleEntry> = emptyList(),
     val reactionRoles: List<ReactionRoleEntry> = emptyList(),
     val autoRoles: List<Long> = emptyList(),
+    val tempVoice: TempVoiceConfig = TempVoiceConfig(),
 )
 
 @Serializable

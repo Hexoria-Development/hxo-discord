@@ -27,16 +27,15 @@ class TicketMemberService(
         if (silent) {
             resolvedThread.sendMessage(member.asMention).queue { msg -> msg.delete().queue(null) { } }
         } else {
-            val welcomeEmbed = embed {
-                setTitle("Willkommen im Ticket")
-                setDescription("Du wurdest zu diesem Ticket hinzugefügt. Bitte sieh dir den Verlauf des Tickets an und warte auf eine Nachricht eines Teammitglieds.")
-                setColor(COLOR_INFO)
-                setTimestamp(Instant.now())
-                if (addedBy != null) {
-                    setFooter("Hinzugefügt von ${addedBy.user.name}", addedBy.user.effectiveAvatarUrl)
-                }
-            }
-            resolvedThread.sendMessage(member.asMention).setEmbeds(welcomeEmbed).queue()
+            resolvedThread.sendContainers(container {
+                accentColor = COLOR_INFO
+                header("Willkommen im Ticket")
+                text(
+                    "${member.asMention}, du wurdest zu diesem Ticket hinzugefügt. Bitte sieh dir den " +
+                    "Verlauf des Tickets an und warte auf eine Nachricht eines Teammitglieds."
+                )
+                if (addedBy != null) footer("Hinzugefügt von ${addedBy.user.name}", now) else footer(now)
+            }).queue()
         }
         logger.info("User ${member.user.name} zu Ticket ${ticket.ticketId} hinzugefügt.")
     }

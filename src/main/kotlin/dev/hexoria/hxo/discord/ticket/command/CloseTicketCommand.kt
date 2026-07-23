@@ -6,7 +6,6 @@ import dev.hexoria.hxo.discord.ticket.*
 import dev.hexoria.hxo.discord.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -25,15 +24,15 @@ class CloseTicketCommand(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.editContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             if (ticket.isClosed()) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Bereits geschlossen", "Dieses Ticket wurde bereits geschlossen.")
+                event.hook.editContainers(
+                    errorContainer("Bereits geschlossen", "Dieses Ticket wurde bereits geschlossen.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
@@ -42,17 +41,17 @@ class CloseTicketCommand(
             val hasPermission = member.hasPermission(DiscordPermission.TICKET_CLOSE)
 
             if (!hasPermission) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Keine Berechtigung", "Nur ein Teamer kann dieses Ticket schließen.")
+                event.hook.editContainers(
+                    errorContainer("Keine Berechtigung", "Nur ein Teamer kann dieses Ticket schließen.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
-            val menu = buildCloseReasonMenu(ticket.ticketType)
-
-            event.hook.editOriginal("Bitte wähle einen Schließ-Grund:")
-                .setComponents(ActionRow.of(menu))
-                .queue { event.hook.deleteOriginalAfter(coroutineScope) }
+            event.hook.editContainers(container {
+                accentColor = COLOR_INFO
+                text("Bitte wähle einen Schließ-Grund:")
+                buttons(buildCloseReasonMenu(ticket.ticketType))
+            }).queue { event.hook.deleteOriginalAfter(coroutineScope) }
         }
     }
 

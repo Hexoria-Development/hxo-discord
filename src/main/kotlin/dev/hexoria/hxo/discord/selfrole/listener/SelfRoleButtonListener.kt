@@ -1,7 +1,8 @@
 package dev.hexoria.hxo.discord.selfrole.listener
 
-import dev.hexoria.hxo.discord.util.errorEmbed
-import dev.hexoria.hxo.discord.util.successEmbed
+import dev.hexoria.hxo.discord.util.errorContainer
+import dev.hexoria.hxo.discord.util.replyContainers
+import dev.hexoria.hxo.discord.util.successContainer
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.springframework.stereotype.Component
@@ -17,18 +18,18 @@ class SelfRoleButtonListener : ListenerAdapter() {
         val member = event.member ?: return
 
         val role = guild.getRoleById(roleId) ?: run {
-            event.replyEmbeds(errorEmbed("Fehler", "Diese Rolle existiert nicht mehr. Bitte einen Admin kontaktieren."))
+            event.replyContainers(errorContainer("Fehler", "Diese Rolle existiert nicht mehr. Bitte einen Admin kontaktieren."))
                 .setEphemeral(true).queue()
             return
         }
 
         if (role in member.roles) {
             guild.removeRoleFromMember(member, role).queue()
-            event.replyEmbeds(successEmbed("Rolle entfernt", "**${role.name}** wurde entfernt."))
+            event.replyContainers(successContainer("Rolle entfernt", "**${role.name}** wurde entfernt."))
                 .setEphemeral(true).queue()
         } else {
             guild.addRoleToMember(member, role).queue()
-            event.replyEmbeds(successEmbed("Rolle hinzugefügt", "**${role.name}** wurde hinzugefügt."))
+            event.replyContainers(successContainer("Rolle hinzugefügt", "**${role.name}** wurde hinzugefügt."))
                 .setEphemeral(true).queue()
         }
     }

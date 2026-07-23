@@ -1,11 +1,18 @@
 package dev.hexoria.hxo.discord.ticket
 
 import dev.hexoria.hxo.discord.permission.DiscordPermission
-import dev.hexoria.hxo.discord.ticket.modal.modal
+import dev.hexoria.hxo.discord.util.modal
 import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.components.textinput.TextInputStyle
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.modals.Modal
+
+/** Ein Feld im Ticket-Container: Überschrift und Inhalt. */
+data class TicketField(val label: String, val value: String)
+
+private fun MutableList<TicketField>.field(label: String, value: String?) {
+    if (!value.isNullOrBlank()) add(TicketField(label, value))
+}
 
 private val defaultCloseReasons = listOf(
     TicketCloseReason.of("no_reason", "Kein Grund", "Es wurde kein Grund angegeben"),
@@ -72,6 +79,16 @@ enum class TicketType(
             event.getValue("reported_name")?.asString?.let { put("reported_name", it) }
             event.getValue("reported_user")?.asString?.takeIf { it.isNotBlank() }?.let { put("reported_user", it) }
         }
+
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Dein Report wurde erstellt.\n" +
+            "Ein Teamer prüft den gemeldeten Vorfall so schnell wie möglich."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Gemeldeter Spieler", data["reported_name"])
+            field("Discord des gemeldeten Spielers", data["reported_user"])
+            field("Was ist passiert?", data["description"])
+        }
     },
     BUG(
         id = "bug",
@@ -85,7 +102,15 @@ enum class TicketType(
             TicketCloseReason.of("external", "Externer Fehler", "Der Bug liegt außerhalb unseres Systems"),
         ),
         viewPermission = DiscordPermission.TICKET_BUG_VIEW,
-    ),
+    ) {
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Dein Bugreport wurde erstellt.\n" +
+            "Das Team sieht sich den Fehler so schnell wie möglich an."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Beschreibung des Fehlers", data["description"])
+        }
+    },
     UNBAN(
         id = "unban",
         displayName = "Entbannungsantrag",
@@ -129,6 +154,16 @@ enum class TicketType(
             put("description", event.getValue("description")?.asString ?: "")
             event.getValue("punish_id")?.asString?.let { put("punish_id", it) }
             event.getValue("minecraft_name")?.asString?.let { put("minecraft_name", it) }
+        }
+
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Dein Entbannungsantrag wurde erstellt.\n" +
+            "Ein Teamer prüft deinen Antrag so schnell wie möglich."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Punish-ID", data["punish_id"])
+            field("Minecraft-Name", data["minecraft_name"])
+            field("Begründung", data["description"])
         }
     },
     BEWERBUNG(
@@ -183,6 +218,17 @@ enum class TicketType(
             event.getValue("age")?.asString?.let { put("age", it) }
             event.getValue("experience")?.asString?.let { put("experience", it) }
         }
+
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Deine Bewerbung wurde eingereicht.\n" +
+            "Die Teamleitung sieht sich deine Bewerbung an und meldet sich bei dir."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Gewünschte Rolle", data["role"])
+            field("Alter", data["age"])
+            field("Vorerfahrung", data["experience"])
+            field("Motivation", data["description"])
+        }
     },
     DISCORD_SUPPORT(
         id = "discord_support",
@@ -216,6 +262,15 @@ enum class TicketType(
             event.getValue("affected_user")?.asString?.takeIf { it.isNotBlank() }
                 ?.let { put("affected_user", it) }
         }
+
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Dein Discord Support Ticket wurde erstellt.\n" +
+            "Ein Teamer wird sich so schnell wie möglich um dein Anliegen kümmern."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Betroffener Nutzer", data["affected_user"])
+            field("Dein Anliegen", data["description"])
+        }
     },
     EVENT_SUPPORT(
         id = "event_support",
@@ -248,6 +303,15 @@ enum class TicketType(
             put("description", event.getValue("description")?.asString ?: "")
             event.getValue("event_name")?.asString?.let { put("event_name", it) }
         }
+
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Dein Event Support Ticket wurde erstellt.\n" +
+            "Das Event-Team wird sich so schnell wie möglich um dein Anliegen kümmern."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Event", data["event_name"])
+            field("Dein Anliegen", data["description"])
+        }
     },
     CONTENT_SUPPORT(
         id = "content_support",
@@ -279,6 +343,15 @@ enum class TicketType(
         override fun extractFormData(event: ModalInteractionEvent) = buildMap {
             put("description", event.getValue("description")?.asString ?: "")
             event.getValue("content_type")?.asString?.let { put("content_type", it) }
+        }
+
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Dein Content Support Ticket wurde erstellt.\n" +
+            "Das Management wird sich so schnell wie möglich um dein Anliegen kümmern."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Art des Contents", data["content_type"])
+            field("Dein Anliegen", data["description"])
         }
     },
     TEAM_REPORT(
@@ -325,6 +398,16 @@ enum class TicketType(
             event.getValue("evidence")?.asString?.takeIf { it.isNotBlank() }
                 ?.let { put("evidence", it) }
         }
+
+        override fun welcomeText(authorId: Long) =
+            "Willkommen <@$authorId>! Deine Meldung wurde erstellt.\n" +
+            "Nur die Teamleitung kann dieses Ticket einsehen."
+
+        override fun displayFields(data: Map<String, String>) = buildList {
+            field("Betroffenes Teammitglied", data["team_member"])
+            field("Was ist passiert?", data["description"])
+            field("Beweise / Links", data["evidence"])
+        }
     };
 
     open fun createModal(): Modal = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
@@ -340,6 +423,16 @@ enum class TicketType(
 
     open fun extractFormData(event: ModalInteractionEvent): Map<String, String> =
         mapOf("description" to (event.getValue("description")?.asString ?: ""))
+
+    /** Begrüßungstext, der im Ticket-Container über den Feldern steht. */
+    open fun welcomeText(authorId: Long): String =
+        "Willkommen <@$authorId>! Dein Ticket wurde erstellt.\n" +
+        "Ein Teamer wird sich so schnell wie möglich um dein Anliegen kümmern."
+
+    /** Felder, die im Ticket-Container angezeigt werden. */
+    open fun displayFields(data: Map<String, String>): List<TicketField> = buildList {
+        field("Dein Anliegen", data["description"])
+    }
 
     fun toButton(): Button = Button.secondary("ticket:open:$id", "$emoji $displayName")
 

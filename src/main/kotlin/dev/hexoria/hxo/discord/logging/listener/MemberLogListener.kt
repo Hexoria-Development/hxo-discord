@@ -17,7 +17,6 @@ import net.dv8tion.jda.api.events.user.update.UserUpdateGlobalNameEvent
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 @Component
 class MemberLogListener(
@@ -35,14 +34,15 @@ class MemberLogListener(
         val channel = memberLogChannel() ?: return
         coroutineScope.launch {
             loggingRepository.logMember(event.guild.idLong, event.user.idLong, event.user.name, "JOIN", null)
-            channel.sendMessageEmbeds(embed {
-                setTitle("✅ Mitglied beigetreten")
-                setColor(COLOR_SUCCESS)
-                addField("User", "${event.user.asMention}\n`${event.user.name}`", true)
-                addField("ID", "`${event.user.idLong}`", true)
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("Server: ${event.guild.name}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_SUCCESS
+                section(event.user.effectiveAvatarUrl) {
+                    header("✅ Mitglied beigetreten")
+                    text("${event.user.asMention}\n`${event.user.name}`")
+                }
+                divider()
+                field("ID", "`${event.user.idLong}`")
+                footer("Server: ${event.guild.name}", now)
             }).queue()
         }
     }
@@ -55,15 +55,16 @@ class MemberLogListener(
                 ?.joinToString(" ") { it.asMention }
                 ?.takeIf { it.isNotBlank() } ?: "*keine*"
             loggingRepository.logMember(event.guild.idLong, event.user.idLong, event.user.name, "LEAVE", roles)
-            channel.sendMessageEmbeds(embed {
-                setTitle("👋 Mitglied verlassen")
-                setColor(COLOR_ERROR)
-                addField("User", "${event.user.asMention}\n`${event.user.name}`", true)
-                addField("ID", "`${event.user.idLong}`", true)
-                addField("Rollen", roles.take(1024), false)
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("Server: ${event.guild.name}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_ERROR
+                section(event.user.effectiveAvatarUrl) {
+                    header("👋 Mitglied verlassen")
+                    text("${event.user.asMention}\n`${event.user.name}`")
+                }
+                divider()
+                field("ID", "`${event.user.idLong}`")
+                field("Rollen", roles.take(1024))
+                footer("Server: ${event.guild.name}", now)
             }).queue()
         }
     }
@@ -74,13 +75,13 @@ class MemberLogListener(
         val channel = memberLogChannel() ?: return
         coroutineScope.launch {
             loggingRepository.logMember(event.guild.idLong, event.user.idLong, event.user.name, "BAN", null)
-            channel.sendMessageEmbeds(embed {
-                setTitle("🔨 Mitglied gebannt")
-                setColor(COLOR_ERROR)
-                setDescription("${event.user.asMention} `${event.user.name}`")
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("User-ID: ${event.user.idLong}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_ERROR
+                section(event.user.effectiveAvatarUrl) {
+                    header("🔨 Mitglied gebannt")
+                    text("${event.user.asMention} `${event.user.name}`")
+                }
+                footer("User-ID: ${event.user.idLong}", now)
             }).queue()
         }
     }
@@ -89,13 +90,13 @@ class MemberLogListener(
         val channel = memberLogChannel() ?: return
         coroutineScope.launch {
             loggingRepository.logMember(event.guild.idLong, event.user.idLong, event.user.name, "UNBAN", null)
-            channel.sendMessageEmbeds(embed {
-                setTitle("🔓 Mitglied entbannt")
-                setColor(COLOR_INFO)
-                setDescription("${event.user.asMention} `${event.user.name}`")
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("User-ID: ${event.user.idLong}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_INFO
+                section(event.user.effectiveAvatarUrl) {
+                    header("🔓 Mitglied entbannt")
+                    text("${event.user.asMention} `${event.user.name}`")
+                }
+                footer("User-ID: ${event.user.idLong}", now)
             }).queue()
         }
     }
@@ -107,15 +108,16 @@ class MemberLogListener(
         coroutineScope.launch {
             val detail = "${event.oldNickname ?: event.member.user.name} → ${event.newNickname ?: event.member.user.name}"
             loggingRepository.logMember(event.guild.idLong, event.user.idLong, event.user.name, "NICKNAME", detail)
-            channel.sendMessageEmbeds(embed {
-                setTitle("✏️ Nickname geändert")
-                setColor(COLOR_WARNING)
-                setDescription(event.user.asMention)
-                addField("Vorher", event.oldNickname ?: "*keiner*", true)
-                addField("Nachher", event.newNickname ?: "*keiner*", true)
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("User-ID: ${event.user.idLong}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_WARNING
+                section(event.user.effectiveAvatarUrl) {
+                    header("✏️ Nickname geändert")
+                    text(event.user.asMention)
+                }
+                divider()
+                field("Vorher", event.oldNickname ?: "*keiner*")
+                field("Nachher", event.newNickname ?: "*keiner*")
+                footer("User-ID: ${event.user.idLong}", now)
             }).queue()
         }
     }
@@ -126,15 +128,16 @@ class MemberLogListener(
         val channel = memberLogChannel() ?: return
         coroutineScope.launch {
             loggingRepository.logMember(guild.idLong, event.user.idLong, event.newValue, "USERNAME", "${event.oldValue} → ${event.newValue}")
-            channel.sendMessageEmbeds(embed {
-                setTitle("🔤 Username geändert")
-                setColor(COLOR_WARNING)
-                setDescription(event.user.asMention)
-                addField("Vorher", "`${event.oldValue}`", true)
-                addField("Nachher", "`${event.newValue}`", true)
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("User-ID: ${event.user.idLong}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_WARNING
+                section(event.user.effectiveAvatarUrl) {
+                    header("🔤 Username geändert")
+                    text(event.user.asMention)
+                }
+                divider()
+                field("Vorher", "`${event.oldValue}`")
+                field("Nachher", "`${event.newValue}`")
+                footer("User-ID: ${event.user.idLong}", now)
             }).queue()
         }
     }
@@ -145,15 +148,16 @@ class MemberLogListener(
         val channel = memberLogChannel() ?: return
         coroutineScope.launch {
             loggingRepository.logMember(guild.idLong, event.user.idLong, event.user.name, "DISPLAY_NAME", "${event.oldValue ?: "*keiner*"} → ${event.newValue ?: "*keiner*"}")
-            channel.sendMessageEmbeds(embed {
-                setTitle("🏷️ Anzeigename geändert")
-                setColor(COLOR_WARNING)
-                setDescription(event.user.asMention)
-                addField("Vorher", event.oldValue ?: "*keiner*", true)
-                addField("Nachher", event.newValue ?: "*keiner*", true)
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("User-ID: ${event.user.idLong}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_WARNING
+                section(event.user.effectiveAvatarUrl) {
+                    header("🏷️ Anzeigename geändert")
+                    text(event.user.asMention)
+                }
+                divider()
+                field("Vorher", event.oldValue ?: "*keiner*")
+                field("Nachher", event.newValue ?: "*keiner*")
+                footer("User-ID: ${event.user.idLong}", now)
             }).queue()
         }
     }
@@ -165,15 +169,15 @@ class MemberLogListener(
         coroutineScope.launch {
             val roles = event.roles.joinToString(", ") { it.name }
             loggingRepository.logMember(event.guild.idLong, event.user.idLong, event.user.name, "ROLE_ADD", roles)
-            channel.sendMessageEmbeds(embed {
-                setTitle("➕ Rolle hinzugefügt")
-                setColor(COLOR_SUCCESS)
-                setDescription(event.user.asMention)
-                addField("User", "`${event.user.name}`", true)
-                addField("Rollen", event.roles.joinToString(" ") { it.asMention }, false)
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("User-ID: ${event.user.idLong}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_SUCCESS
+                section(event.user.effectiveAvatarUrl) {
+                    header("➕ Rolle hinzugefügt")
+                    text("${event.user.asMention}\n`${event.user.name}`")
+                }
+                divider()
+                field("Rollen", event.roles.joinToString(" ") { it.asMention })
+                footer("User-ID: ${event.user.idLong}", now)
             }).queue()
         }
     }
@@ -183,15 +187,15 @@ class MemberLogListener(
         coroutineScope.launch {
             val roles = event.roles.joinToString(", ") { it.name }
             loggingRepository.logMember(event.guild.idLong, event.user.idLong, event.user.name, "ROLE_REMOVE", roles)
-            channel.sendMessageEmbeds(embed {
-                setTitle("➖ Rolle entfernt")
-                setColor(COLOR_ERROR)
-                setDescription(event.user.asMention)
-                addField("User", "`${event.user.name}`", true)
-                addField("Rollen", event.roles.joinToString(" ") { it.asMention }, false)
-                setThumbnail(event.user.effectiveAvatarUrl)
-                setFooter("User-ID: ${event.user.idLong}")
-                setTimestamp(Instant.now())
+            channel.sendSilentContainers(container {
+                accentColor = COLOR_ERROR
+                section(event.user.effectiveAvatarUrl) {
+                    header("➖ Rolle entfernt")
+                    text("${event.user.asMention}\n`${event.user.name}`")
+                }
+                divider()
+                field("Rollen", event.roles.joinToString(" ") { it.asMention })
+                footer("User-ID: ${event.user.idLong}", now)
             }).queue()
         }
     }

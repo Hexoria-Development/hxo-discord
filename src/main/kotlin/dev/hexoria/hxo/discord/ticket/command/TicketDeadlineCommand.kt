@@ -23,20 +23,20 @@ class TicketDeadlineCommand(
         if (event.name != "deadline") return
 
         if (!event.member.hasPermission(DiscordPermission.COMMAND_TICKET_DEADLINE)) {
-            event.replyEmbeds(
-                errorEmbed("Keine Berechtigung", "Du hast keine Berechtigung, einen Antwort-Timer zu setzen.")
+            event.replyContainers(
+                errorContainer("Keine Berechtigung", "Du hast keine Berechtigung, einen Antwort-Timer zu setzen.")
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
         val minutes = event.getOption("minuten")?.asLong ?: run {
-            event.replyEmbeds(errorEmbed("Fehler", "Keine Minutenanzahl angegeben."))
+            event.replyContainers(errorContainer("Fehler", "Keine Minutenanzahl angegeben."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
         if (minutes < 1 || minutes > 10080) {
-            event.replyEmbeds(errorEmbed("Ungültige Zeit", "Die Zeit muss zwischen 1 und 10080 Minuten (7 Tage) liegen."))
+            event.replyContainers(errorContainer("Ungültige Zeit", "Die Zeit muss zwischen 1 und 10080 Minuten (7 Tage) liegen."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
@@ -45,15 +45,15 @@ class TicketDeadlineCommand(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.editContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             if (ticket.isClosed()) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Ticket geschlossen", "Das Ticket ist bereits geschlossen.")
+                event.hook.editContainers(
+                    errorContainer("Ticket geschlossen", "Das Ticket ist bereits geschlossen.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
@@ -62,18 +62,17 @@ class TicketDeadlineCommand(
 
             val deadlineTimestamp = Instant.now().plusSeconds(minutes * 60)
 
-            event.hook.editOriginalEmbeds(embed {
-                setTitle("⏰ Antwort-Timer gesetzt")
-                setColor(COLOR_WARNING)
-                setDescription(
+            event.hook.editContainers(container {
+                accentColor = COLOR_WARNING
+                header("⏰ Antwort-Timer gesetzt")
+                text(
                     """
                     <@${ticket.authorId}>, du hast **$minutes Minuten** Zeit zu antworten.
 
                     Wenn bis <t:${deadlineTimestamp.epochSecond}:F> keine Antwort eingeht, wird das Ticket automatisch geschlossen.
                     """.trimIndent()
                 )
-                setTimestamp(Instant.now())
-                setFooter("Gesetzt von ${event.member!!.user.name}", event.member!!.user.effectiveAvatarUrl)
+                footer("Gesetzt von ${event.member!!.user.name}", now)
             }).queue()
         }
     }

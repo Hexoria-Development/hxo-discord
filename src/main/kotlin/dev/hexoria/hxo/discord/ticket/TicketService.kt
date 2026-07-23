@@ -5,8 +5,7 @@ import dev.hexoria.hxo.discord.permission.getRolesWithPermission
 import dev.hexoria.hxo.discord.util.*
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.components.actionrow.ActionRow
-import net.dv8tion.jda.api.components.buttons.Button
+import net.dv8tion.jda.api.components.separator.Separator
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
@@ -72,42 +71,38 @@ class TicketService(
         val viewRoleIds = type.viewPermission.getRolesWithPermission(guild.idLong)
         val bypassRoleIds = DiscordPermission.TICKET_TYPE_BYPASS.getRolesWithPermission(guild.idLong)
 
-        val addedUserIds = mutableSetOf<Long>()
-        for (roleId in viewRoleIds + bypassRoleIds) {
-            val role = guild.getRoleById(roleId) ?: continue
-            guild.getMembersWithRoles(role).forEach { member ->
-                if (addedUserIds.add(member.idLong)) {
-                    memberService.addMember(ticket, member, silent = true, thread = thread)
-                }
-            }
-        }
-
-        if (addedUserIds.add(author.idLong)) {
-            memberService.addMember(ticket, author, silent = true, thread = thread)
-        }
+        addRoles(thread, (viewRoleIds + bypassRoleIds).distinct())
+        memberService.addMember(ticket, author, silent = true, thread = thread)
 
         channel.upsertPermissionOverride(author)
             .grant(Permission.MESSAGE_SEND_IN_THREADS)
             .queue()
 
-        thread.sendMessageEmbeds(
-            embed {
-                setTitle("${type.emoji} ${type.displayName} – Ticket #$internalCounter")
-                setDescription(buildTicketDescription(type, authorId, formData))
-                setColor(COLOR_INFO)
-                setTimestamp(Instant.now())
-                setFooter("Ticket-ID: $ticketId")
-            }
-        ).setComponents(
-            ActionRow.of(
-                Button.success("ticket:claim", "🙋 Ticket übernehmen"),
-                Button.danger("ticket:close:btn", "🔒 Schließen"),
-                Button.secondary("ticket:userinfo", "👤 User Info"),
-            )
-        ).queue()
+        thread.sendMessageComponents(buildTicketContainer(ticket))
+            .useComponentsV2()
+            .queue { message -> thread.pinMessageById(message.idLong).queue(null) { } }
 
         logger.info("Ticket #$internalCounter (${type.id}) von User $authorName ($authorId) erstellt → Thread ${thread.id}")
         return ticket
+    }
+
+    /**
+     * Gibt allen Mitgliedern der Rollen Zugriff auf den Thread.
+     *
+     * Die Nachricht wird ohne Mention gesendet und erst danach zum Rollen-Ping editiert – so werden
+     * die Mitglieder der Rolle dem Thread hinzugefügt, ohne dass eine Benachrichtigung ausgelöst
+     * wird. Anschließend wird die Nachricht wieder gelöscht.
+     */
+    private fun addRoles(thread: ThreadChannel, roleIds: Collection<Long>) {
+        for (roleId in roleIds) {
+            runCatching {
+                val message = thread.sendMessage("Berechtige Rolle $roleId …").complete()
+                message.editMessage("<@&$roleId>").complete()
+                message.delete().complete()
+            }.onFailure {
+                logger.warn("Rolle $roleId konnte keinen Zugriff auf Thread ${thread.id} erhalten.", it)
+            }
+        }
     }
 
     suspend fun closeTicket(
@@ -135,24 +130,22 @@ class TicketService(
 
         val closedAtInstant = closedAt.toInstant(ZoneOffset.UTC)
 
-        thread.sendMessageEmbeds(
-            embed {
-                setTitle("🔒 Ticket geschlossen")
-                setColor(COLOR_ERROR)
-                setDescription(
-                    """
-                    Dieses Ticket wurde von **$closedByName** geschlossen.
-
-                    **Grund:** ${reason.displayName}
-                    **Beschreibung:** ${reason.description}
-                    """.trimIndent()
-                )
-                addField("Ersteller", "<@${ticket.authorId}>", true)
-                addField("Geschlossen von", "<@$closedById>", true)
-                addField("Zeitpunkt", "<t:${closedAtInstant.epochSecond}:F>", true)
-                setTimestamp(closedAtInstant)
+        thread.sendContainers(
+            container {
+                accentColor = COLOR_ERROR
+                header("🔒 Ticket geschlossen")
+                text("Dieses Ticket wurde von **$closedByName** geschlossen.")
+                divider(Separator.Spacing.LARGE)
+                field("Grund", reason.displayName)
+                field("Beschreibung", reason.description)
+                divider(Separator.Spacing.LARGE)
+                field("Ticket-Typ", "${ticket.ticketType.emoji} ${ticket.ticketType.displayName}")
+                field("Ersteller", "<@${ticket.authorId}>")
+                field("Geschlossen von", "<@$closedById>")
+                field("Zeitpunkt", "<t:${closedAtInstant.epochSecond}:F>")
+                footer("Ticket-ID: ${ticket.ticketId}")
             }
-        ).complete()
+        ).setAllowedMentions(emptyList()).complete()
 
         val author = jda.getGuildById(ticket.guildId)?.getMemberById(ticket.authorId)
         if (author != null) {
@@ -183,43 +176,3 @@ class TicketService(
     suspend fun isOpenTicket(threadId: Long): Boolean =
         getTicketByThreadId(threadId)?.isClosed() == false
 }
-
-private fun buildTicketDescription(type: TicketType, authorId: Long, data: Map<String, String>): String =
-    when (type) {
-        TicketType.REPORT -> buildString {
-            appendLine("Willkommen <@$authorId>! Dein Report wurde erstellt.")
-            appendLine()
-            appendLine("**Gemeldeter Spieler:** ${data["reported_name"] ?: "–"}")
-            data["reported_user"]?.let { appendLine("**Discord:** $it") }
-            appendLine()
-            appendLine("**Anliegen:**")
-            append(data["description"] ?: "")
-        }
-        TicketType.UNBAN -> buildString {
-            appendLine("Willkommen <@$authorId>! Dein Entbannungsantrag wurde erstellt.")
-            appendLine()
-            appendLine("**Minecraft-Name:** ${data["minecraft_name"] ?: "–"}")
-            appendLine("**Punish-ID:** ${data["punish_id"] ?: "–"}")
-            appendLine()
-            appendLine("**Begründung:**")
-            append(data["description"] ?: "")
-        }
-        TicketType.CONTENT_SUPPORT -> buildString {
-            appendLine("Willkommen <@$authorId>! Dein Content Support Ticket wurde erstellt.")
-            appendLine()
-            appendLine("**Art des Contents:** ${data["content_type"] ?: "–"}")
-            appendLine()
-            appendLine("**Anliegen:**")
-            appendLine(data["description"] ?: "")
-            appendLine()
-            append("Das Management wird sich so schnell wie möglich um dein Anliegen kümmern.")
-        }
-        else -> buildString {
-            appendLine("Willkommen <@$authorId>! Dein Ticket wurde erstellt.")
-            appendLine()
-            appendLine("**Dein Anliegen:**")
-            appendLine(data["description"] ?: "")
-            appendLine()
-            append("Ein Teamer wird sich so schnell wie möglich um dein Anliegen kümmern.")
-        }
-    }

@@ -21,14 +21,14 @@ class TicketAddUserCommand(
         if (event.name != "add") return
 
         if (!event.member.hasPermission(DiscordPermission.COMMAND_TICKET_ADD)) {
-            event.replyEmbeds(
-                errorEmbed("Keine Berechtigung", "Du hast keine Berechtigung, User zu Tickets hinzuzufügen.")
+            event.replyContainers(
+                errorContainer("Keine Berechtigung", "Du hast keine Berechtigung, User zu Tickets hinzuzufügen.")
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
         val targetUser = event.getOption("user")?.asMember ?: run {
-            event.replyEmbeds(errorEmbed("Fehler", "Kein User angegeben."))
+            event.replyContainers(errorContainer("Fehler", "Kein User angegeben."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
@@ -37,22 +37,22 @@ class TicketAddUserCommand(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.editContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             if (ticket.isClosed()) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Ticket geschlossen", "Zu einem geschlossenen Ticket können keine Mitglieder hinzugefügt werden.")
+                event.hook.editContainers(
+                    errorContainer("Ticket geschlossen", "Zu einem geschlossenen Ticket können keine Mitglieder hinzugefügt werden.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             memberService.addMember(ticket, targetUser, addedBy = event.member)
-            event.hook.editOriginalEmbeds(
-                successEmbed("Mitglied hinzugefügt", "${targetUser.asMention} wurde dem Ticket hinzugefügt.")
+            event.hook.editContainers(
+                successContainer("Mitglied hinzugefügt", "${targetUser.asMention} wurde dem Ticket hinzugefügt.")
             ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
         }
     }

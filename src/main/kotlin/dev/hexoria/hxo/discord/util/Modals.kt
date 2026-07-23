@@ -1,4 +1,4 @@
-package dev.hexoria.hxo.discord.ticket.modal
+package dev.hexoria.hxo.discord.util
 
 import net.dv8tion.jda.api.components.label.Label
 import net.dv8tion.jda.api.components.textinput.TextInput

@@ -12,7 +12,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 @Component
 class MessageLogListener(
@@ -78,20 +77,17 @@ class MessageLogListener(
                 newContent  = newContent,
             )
 
-            jda.getTextChannelById(logChannelId)?.sendMessageEmbeds(embed {
-                setTitle("✏️ Nachricht Bearbeitet")
-                setColor(COLOR_WARNING)
-                setThumbnail(event.author.effectiveAvatarUrl)
-                addField("Autor", "${event.author.asMention}\n`${event.author.name}`", true)
-                addField("Autor ID", "`${event.author.idLong}`", true)
-                if (oldContent != null)
-                    addField("Vorher", oldContent.take(512), false)
-                if (newContent != null)
-                    addField("Nachher", newContent.take(512), false)
-                addField("Kanal", "<#${event.channel.idLong}>", true)
-                addField("Nachricht", "[Zum Sprung](${event.message.jumpUrl})", true)
-                setFooter("Nachrichten-ID: ${event.messageId}")
-                setTimestamp(Instant.now())
+            jda.getTextChannelById(logChannelId)?.sendSilentContainers(container {
+                accentColor = COLOR_WARNING
+                section(event.author.effectiveAvatarUrl) {
+                    header("✏️ Nachricht Bearbeitet")
+                    text("${event.author.asMention}\n`${event.author.name}` • `${event.author.idLong}`")
+                }
+                divider()
+                field("Vorher", oldContent?.take(512))
+                field("Nachher", newContent?.take(512))
+                field("Kanal", "<#${event.channel.idLong}> • [Zum Sprung](${event.message.jumpUrl})")
+                footer("Nachrichten-ID: ${event.messageId}", now)
             })?.queue()
         }
     }
@@ -118,17 +114,16 @@ class MessageLogListener(
                 newContent  = null,
             )
 
-            jda.getTextChannelById(logChannelId)?.sendMessageEmbeds(embed {
-                setTitle("🗑️ Nachricht Gelöscht")
-                setColor(COLOR_ERROR)
-                setThumbnail(cached.authorAvatar)
-                addField("Autor", "<@${cached.authorId}>\n`${cached.authorName}`", true)
-                addField("Autor ID", "`${cached.authorId}`", true)
-                val content = cached.content.takeIf { it.isNotBlank() } ?: "*[kein Text]*"
-                addField("Inhalt", content.take(1024), false)
-                addField("Kanal", "<#${event.channel.idLong}>", true)
-                setFooter("Nachrichten-ID: ${event.messageId}")
-                setTimestamp(Instant.now())
+            jda.getTextChannelById(logChannelId)?.sendSilentContainers(container {
+                accentColor = COLOR_ERROR
+                section(cached.authorAvatar) {
+                    header("🗑️ Nachricht Gelöscht")
+                    text("<@${cached.authorId}>\n`${cached.authorName}` • `${cached.authorId}`")
+                }
+                divider()
+                field("Inhalt", (cached.content.takeIf { it.isNotBlank() } ?: "*[kein Text]*").take(1024))
+                field("Kanal", "<#${event.channel.idLong}>")
+                footer("Nachrichten-ID: ${event.messageId}", now)
             })?.queue()
         }
     }

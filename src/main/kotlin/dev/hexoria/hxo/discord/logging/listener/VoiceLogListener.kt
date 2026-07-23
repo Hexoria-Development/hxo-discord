@@ -9,7 +9,6 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 @Component
 class VoiceLogListener(
@@ -42,16 +41,16 @@ class VoiceLogListener(
                 channelTo   = channelJoined?.name,
             )
 
-            jda.getTextChannelById(logChannelId)?.sendMessageEmbeds(embed {
-                setTitle(title)
-                setColor(color)
-                setThumbnail(member.user.effectiveAvatarUrl)
-                addField("User", "${member.asMention}\n`${member.user.name}`", true)
-                addField("ID", "`${member.idLong}`", true)
-                if (channelLeft != null)   addField("Von",  channelLeft.asMention,   true)
-                if (channelJoined != null) addField("Nach", channelJoined.asMention, true)
-                setFooter("Server: ${event.guild.name}")
-                setTimestamp(Instant.now())
+            jda.getTextChannelById(logChannelId)?.sendSilentContainers(container {
+                accentColor = color
+                section(member.user.effectiveAvatarUrl) {
+                    header(title)
+                    text("${member.asMention}\n`${member.user.name}` • `${member.idLong}`")
+                }
+                divider()
+                if (channelLeft != null)   field("Von",  channelLeft.asMention)
+                if (channelJoined != null) field("Nach", channelJoined.asMention)
+                footer("Server: ${event.guild.name}", now)
             })?.queue()
         }
     }

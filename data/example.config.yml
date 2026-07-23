@@ -41,6 +41,14 @@ automod:
     maxEvents: 5            # Maximale Join/Leave-Aktionen im Zeitfenster
     timeWindowSeconds: 5    # Zeitfenster in Sekunden
 
+tempVoice:
+  enabled: false
+  creatorChannelId: 123456789012345678   # Voice-Channel "➕ Sprachkanal erstellen"
+  categoryId: 123456789012345678         # Kategorie für die erstellten Kanäle (0 = Kategorie des Creator-Channels)
+  infoChannelId: 123456789012345678      # Text-Channel für die Willkommens-Nachricht
+  channelNameTemplate: '🔊 %user%'       # %user% = Anzeigename des Erstellers
+  defaultUserLimit: 0                    # 0 = unbegrenzt
+
 autoRoles:
   - 123456789012345678   # Rolle, die beim Betreten automatisch vergeben wird
   - 123456789012345679   # weitere Auto-Rolle (beliebig viele möglich)

@@ -3,8 +3,10 @@ package dev.hexoria.hxo.discord.selfrole.listener
 import dev.hexoria.hxo.discord.config.botConfig
 import dev.hexoria.hxo.discord.selfrole.REACTION_ROLE_PANEL_FOOTER
 import dev.hexoria.hxo.discord.util.componentLogger
+import net.dv8tion.jda.api.components.textdisplay.TextDisplay
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
@@ -47,7 +49,7 @@ class ReactionRoleListener : ListenerAdapter() {
 
         event.retrieveMessage().queue { message ->
             if (message.author.idLong != event.jda.selfUser.idLong) return@queue
-            if (message.embeds.firstOrNull()?.footer?.text != REACTION_ROLE_PANEL_FOOTER) return@queue
+            if (!message.isReactionRolePanel()) return@queue
 
             val role = guild.getRoleById(entry.roleId) ?: run {
                 logger.warn("ReactionRole: Rolle mit ID ${entry.roleId} nicht gefunden – übersprungen.")
@@ -58,5 +60,16 @@ class ReactionRoleListener : ListenerAdapter() {
                 action(guild, member, role)
             }
         }
+    }
+
+    /**
+     * Erkennt das Panel an seiner Fußzeile – im Container als `-#`-Text,
+     * in vor der Components-V2-Umstellung geposteten Panels als Embed-Footer.
+     */
+    private fun Message.isReactionRolePanel(): Boolean {
+        val inContainer = componentTree
+            .findAll(TextDisplay::class.java)
+            .any { it.content.contains(REACTION_ROLE_PANEL_FOOTER) }
+        return inContainer || embeds.firstOrNull()?.footer?.text == REACTION_ROLE_PANEL_FOOTER
     }
 }

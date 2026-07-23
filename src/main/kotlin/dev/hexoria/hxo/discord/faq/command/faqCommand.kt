@@ -24,7 +24,7 @@ class FaqCommand : ListenerAdapter() {
         if (event.name != "faq") return
 
         if (!event.member.hasPermission(DiscordPermission.COMMAND_FAQ)) {
-            event.replyEmbeds(errorEmbed("Keine Berechtigung", "Du hast keine Berechtigung, diesen Befehl zu nutzen."))
+            event.replyContainers(errorContainer("Keine Berechtigung", "Du hast keine Berechtigung, diesen Befehl zu nutzen."))
                 .setEphemeral(true).queue()
             return
         }
@@ -34,33 +34,29 @@ class FaqCommand : ListenerAdapter() {
         val faq = Faq.entries.find { it.id == question }
 
         if (faq == null) {
-            event.replyEmbeds(errorEmbed("Nicht gefunden", "Die FAQ **$question** wurde nicht gefunden."))
+            event.replyContainers(errorContainer("Nicht gefunden", "Die FAQ **$question** wurde nicht gefunden."))
                 .setEphemeral(true).queue()
             return
         }
 
         val channelId = event.messageChannel.idLong
         if (cooldownCache.asMap().any { it.value.first == faq && it.value.second == channelId }) {
-            event.replyEmbeds(errorEmbed("Cooldown", "Diese FAQ wurde in diesem Channel kürzlich bereits gesendet."))
+            event.replyContainers(errorContainer("Cooldown", "Diese FAQ wurde in diesem Channel kürzlich bereits gesendet."))
                 .setEphemeral(true).queue()
             return
         }
         cooldownCache.put(System.currentTimeMillis(), faq to channelId)
 
         val file = faq.attachmentPath?.let(::File)
-        val embedMsg = embed {
-            setTitle(faq.question)
-            setDescription(faq.answer)
-            setColor(COLOR_INFO)
-            if (file != null) setImage("attachment://${file.name}")
-        }
+        val upload = file?.let { FileUpload.fromData(it) }
 
-        val reply = if (user != null) {
-            event.reply(user.asMention).addEmbeds(embedMsg)
-        } else {
-            event.replyEmbeds(embedMsg)
-        }
-        if (file != null) reply.addFiles(FileUpload.fromData(file))
-        reply.queue()
+        // Die Datei hängt an der MediaGallery – JDA lädt sie beim Bauen der Nachricht mit hoch.
+        event.replyContainers(container {
+            accentColor = COLOR_INFO
+            if (user != null) text(user.asMention)
+            header(faq.question)
+            text(faq.answer)
+            if (upload != null) image(upload)
+        }).queue()
     }
 }

@@ -21,14 +21,14 @@ class TicketRemoveUserCommand(
         if (event.name != "remove") return
 
         if (!event.member.hasPermission(DiscordPermission.COMMAND_TICKET_REMOVE)) {
-            event.replyEmbeds(
-                errorEmbed("Keine Berechtigung", "Du hast keine Berechtigung, User aus Tickets zu entfernen.")
+            event.replyContainers(
+                errorContainer("Keine Berechtigung", "Du hast keine Berechtigung, User aus Tickets zu entfernen.")
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
         val targetUser = event.getOption("user")?.asMember ?: run {
-            event.replyEmbeds(errorEmbed("Fehler", "Kein User angegeben."))
+            event.replyContainers(errorContainer("Fehler", "Kein User angegeben."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
@@ -37,15 +37,15 @@ class TicketRemoveUserCommand(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.editContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             memberService.removeMember(ticket, targetUser.idLong)
-            event.hook.editOriginalEmbeds(
-                successEmbed("Mitglied entfernt", "${targetUser.asMention} wurde aus dem Ticket entfernt.")
+            event.hook.editContainers(
+                successContainer("Mitglied entfernt", "${targetUser.asMention} wurde aus dem Ticket entfernt.")
             ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
         }
     }

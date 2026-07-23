@@ -20,7 +20,7 @@ class TicketModalListener(
 
         val typeId = modalId.removePrefix("ticket:modal:")
         val type = TicketType.fromId(typeId) ?: run {
-            event.replyEmbeds(errorEmbed("Fehler", "Unbekannter Ticket-Typ."))
+            event.replyContainers(errorContainer("Fehler", "Unbekannter Ticket-Typ."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
@@ -28,7 +28,7 @@ class TicketModalListener(
         val formData = type.extractFormData(event)
 
         val author = event.member ?: run {
-            event.replyEmbeds(errorEmbed("Fehler", "Dieser Befehl ist nur auf einem Server verfügbar."))
+            event.replyContainers(errorContainer("Fehler", "Dieser Befehl ist nur auf einem Server verfügbar."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
@@ -43,15 +43,15 @@ class TicketModalListener(
             )
 
             if (ticket == null) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed(
+                event.hook.editContainers(
+                    errorContainer(
                         "Ticket konnte nicht erstellt werden",
                         "Du hast bereits ein offenes Ticket oder der Ticket-Channel ist nicht konfiguriert.",
                     )
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
             } else {
-                event.hook.editOriginalEmbeds(
-                    successEmbed(
+                event.hook.editContainers(
+                    successContainer(
                         "Ticket erstellt",
                         "Dein Ticket **#${ticket.internalTicketId}** wurde erstellt! <#${ticket.threadId}>",
                     )

@@ -30,4 +30,5 @@ enum class DiscordPermission {
 
     COMMAND_SELFROLE_PANEL,
     COMMAND_REACTIONROLE_PANEL,
+    COMMAND_VOICE_PANEL,
 }

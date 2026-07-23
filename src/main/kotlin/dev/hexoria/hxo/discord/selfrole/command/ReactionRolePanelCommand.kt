@@ -17,34 +17,34 @@ class ReactionRolePanelCommand : ListenerAdapter() {
         if (event.name != "reactionrole-panel") return
 
         if (!event.member.hasPermission(DiscordPermission.COMMAND_REACTIONROLE_PANEL)) {
-            event.replyEmbeds(errorEmbed("Keine Berechtigung", "Nur Admins können diesen Befehl nutzen."))
+            event.replyContainers(errorContainer("Keine Berechtigung", "Nur Admins können diesen Befehl nutzen."))
                 .setEphemeral(true).queue()
             return
         }
 
         val roles = botConfig.reactionRoles
         if (roles.isEmpty()) {
-            event.replyEmbeds(errorEmbed("Keine Rollen", "Keine Reaction-Rollen in der config.yml konfiguriert."))
+            event.replyContainers(errorContainer("Keine Rollen", "Keine Reaction-Rollen in der config.yml konfiguriert."))
                 .setEphemeral(true).queue()
             return
         }
 
         val lines = roles.joinToString("\n") { r -> "${r.emoji} = <@&${r.roleId}>" }
 
-        val panelEmbed = embed {
-            setTitle("Hol dir deine Rolle")
-            setDescription(lines)
-            setColor(COLOR_INFO)
-            setFooter(REACTION_ROLE_PANEL_FOOTER)
+        val panel = container {
+            accentColor = COLOR_INFO
+            header("Hol dir deine Rolle")
+            text(lines)
+            footer(REACTION_ROLE_PANEL_FOOTER)
         }
 
-        event.channel.sendMessageEmbeds(panelEmbed).queue { message ->
+        event.channel.sendSilentContainers(panel).queue { message ->
             roles.forEach { r ->
                 message.addReaction(Emoji.fromUnicode(r.emoji)).queue(null) {}
             }
         }
 
-        event.replyEmbeds(successEmbed("Panel gepostet", "Das Reaction-Role Panel wurde im Channel gepostet."))
+        event.replyContainers(successContainer("Panel gepostet", "Das Reaction-Role Panel wurde im Channel gepostet."))
             .setEphemeral(true).queue()
     }
 }

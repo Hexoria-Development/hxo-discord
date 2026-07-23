@@ -6,15 +6,12 @@ import dev.hexoria.hxo.discord.util.*
 import dev.hexoria.hxo.discord.ticket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import net.dv8tion.jda.api.components.actionrow.ActionRow
-import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.components.selections.SelectOption
 import net.dv8tion.jda.api.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.springframework.stereotype.Component
-import java.time.Instant
 import java.time.ZoneOffset
 
 @Component
@@ -27,12 +24,12 @@ class TicketButtonListener(
 
     override fun onButtonInteraction(event: ButtonInteractionEvent) {
         when (event.componentId) {
-            "ticket:panel:open"  -> handlePanelOpen(event)
-            "verify:panel:open"  -> handleVerifyOpen(event)
-            "ticket:claim"       -> handleClaim(event)
-            "ticket:unclaim"     -> handleUnclaim(event)
-            "ticket:close:btn"   -> handleCloseButton(event)
-            "ticket:userinfo"    -> handleUserInfo(event)
+            TICKET_PANEL_BUTTON    -> handlePanelOpen(event)
+            "verify:panel:open"    -> handleVerifyOpen(event)
+            TICKET_CLAIM_BUTTON    -> handleClaim(event)
+            TICKET_UNCLAIM_BUTTON  -> handleUnclaim(event)
+            TICKET_CLOSE_BUTTON    -> handleCloseButton(event)
+            TICKET_USERINFO_BUTTON -> handleUserInfo(event)
         }
     }
 
@@ -47,15 +44,17 @@ class TicketButtonListener(
             .addOptions(options)
             .build()
 
-        event.reply("**Welches Ticket möchtest du öffnen?**")
-            .addComponents(ActionRow.of(menu))
-            .setEphemeral(true)
+        event.replyContainers(container {
+            accentColor = COLOR_INFO
+            text("**Welches Ticket möchtest du öffnen?**")
+            buttons(menu)
+        }).setEphemeral(true)
             .queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
     }
 
     private fun handleVerifyOpen(event: ButtonInteractionEvent) {
-        event.replyEmbeds(
-            infoEmbed("Verify", "Dieses Feature ist noch in Arbeit und kommt bald!")
+        event.replyContainers(
+            infoContainer("Verify", "Dieses Feature ist noch in Arbeit und kommt bald!")
         ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
     }
 
@@ -63,8 +62,8 @@ class TicketButtonListener(
         val member = event.member ?: return
 
         if (!member.hasPermission(DiscordPermission.TICKET_CLAIM)) {
-            event.replyEmbeds(
-                errorEmbed("Keine Berechtigung", "Nur Teamer können ein Ticket übernehmen.")
+            event.replyContainers(
+                errorContainer("Keine Berechtigung", "Nur Teamer können ein Ticket übernehmen.")
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
@@ -74,22 +73,22 @@ class TicketButtonListener(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.sendMessageEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.sendContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue()
                 return@launch
             }
 
             if (ticket.isClosed()) {
-                event.hook.sendMessageEmbeds(
-                    errorEmbed("Ticket geschlossen", "Dieses Ticket ist bereits geschlossen.")
+                event.hook.sendContainers(
+                    errorContainer("Ticket geschlossen", "Dieses Ticket ist bereits geschlossen.")
                 ).queue()
                 return@launch
             }
 
             if (ticket.isClaimed()) {
-                event.hook.sendMessageEmbeds(
-                    errorEmbed(
+                event.hook.sendContainers(
+                    errorContainer(
                         "Bereits übernommen",
                         "Dieses Ticket wurde bereits von **${ticket.claimedByName}** übernommen.\n" +
                         "Nur <@${ticket.claimedById}> kann den Claim freigeben."
@@ -101,16 +100,10 @@ class TicketButtonListener(
             ticketService.claimTicket(ticket, member.idLong, member.user.name)
             memberService.addMember(ticket, member, silent = true)
 
-            buttonMessage.editMessageComponents(
-                ActionRow.of(
-                    Button.danger("ticket:unclaim", "🔓 Claim freigeben"),
-                    Button.danger("ticket:close:btn", "🔒 Schließen"),
-                    Button.secondary("ticket:userinfo", "👤 User Info"),
-                )
-            ).queue()
+            buttonMessage.updateTicketActionRow(claimed = true)
 
-            event.hook.sendMessageEmbeds(
-                infoEmbed("Ticket übernommen", "${member.asMention} hat dieses Ticket übernommen. 🙋")
+            event.hook.sendContainers(
+                infoContainer("Ticket übernommen", "${member.asMention} hat dieses Ticket übernommen. 🙋")
             ).queue()
         }
     }
@@ -123,15 +116,15 @@ class TicketButtonListener(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.sendMessageEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.sendContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue()
                 return@launch
             }
 
             if (ticket.claimedById != member.idLong) {
-                event.hook.sendMessageEmbeds(
-                    errorEmbed(
+                event.hook.sendContainers(
+                    errorContainer(
                         "Keine Berechtigung",
                         "Nur <@${ticket.claimedById}> kann den Claim dieses Tickets freigeben."
                     )
@@ -141,16 +134,10 @@ class TicketButtonListener(
 
             ticketService.unclaimTicket(ticket)
 
-            buttonMessage.editMessageComponents(
-                ActionRow.of(
-                    Button.success("ticket:claim", "🙋 Ticket übernehmen"),
-                    Button.danger("ticket:close:btn", "🔒 Schließen"),
-                    Button.secondary("ticket:userinfo", "👤 User Info"),
-                )
-            ).queue()
+            buttonMessage.updateTicketActionRow(claimed = false)
 
-            event.hook.sendMessageEmbeds(
-                infoEmbed(
+            event.hook.sendContainers(
+                infoContainer(
                     "Claim freigegeben",
                     "${member.asMention} hat den Claim freigegeben. Das Ticket kann erneut übernommen werden."
                 )
@@ -164,61 +151,64 @@ class TicketButtonListener(
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
+                event.hook.editContainers(
+                    errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             if (ticket.isClosed()) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Bereits geschlossen", "Dieses Ticket wurde bereits geschlossen.")
+                event.hook.editContainers(
+                    errorContainer("Bereits geschlossen", "Dieses Ticket wurde bereits geschlossen.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
             val hasPermission = member.hasPermission(DiscordPermission.TICKET_CLOSE)
 
             if (!hasPermission) {
-                event.hook.editOriginalEmbeds(
-                    errorEmbed("Keine Berechtigung", "Nur ein Teamer kann dieses Ticket schließen.")
+                event.hook.editContainers(
+                    errorContainer("Keine Berechtigung", "Nur ein Teamer kann dieses Ticket schließen.")
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
-            event.hook.editOriginal("Bitte wähle einen Schließ-Grund:")
-                .setComponents(ActionRow.of(buildCloseReasonMenu(ticket.ticketType)))
-                .queue { event.hook.deleteOriginalAfter(coroutineScope) }
+            event.hook.editContainers(container {
+                accentColor = COLOR_INFO
+                text("Bitte wähle einen Schließ-Grund:")
+                buttons(buildCloseReasonMenu(ticket.ticketType))
+            }).queue { event.hook.deleteOriginalAfter(coroutineScope) }
         }
     }
 
     private fun handleUserInfo(event: ButtonInteractionEvent) {
         val member = event.member ?: return
         if (!member.hasPermission(DiscordPermission.TICKET_CLAIM)) {
-            event.replyEmbeds(
-                errorEmbed("Keine Berechtigung", "Nur Support-Mitglieder können User-Infos einsehen.")
+            event.replyContainers(
+                errorContainer("Keine Berechtigung", "Nur Support-Mitglieder können User-Infos einsehen.")
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
-                event.replyEmbeds(errorEmbed("Kein Ticket", "Dieser Channel ist kein aktives Ticket."))
+                event.replyContainers(errorContainer("Kein Ticket", "Dieser Channel ist kein aktives Ticket."))
                     .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
                 return@launch
             }
 
             val createdEpoch = ticket.createdAt.toEpochSecond(ZoneOffset.UTC)
 
-            event.replyEmbeds(
-                embed {
-                    setTitle("👤 User Info")
-                    setDescription("<@${ticket.authorId}> (${ticket.authorName})")
-                    addField("User-ID", ticket.authorId.toString(), true)
-                    addField("Ticket-Typ", "${ticket.ticketType.emoji} ${ticket.ticketType.displayName}", true)
-                    addField("Erstellt", "<t:$createdEpoch:R>", true)
-                    ticket.ticketData["description"]?.let { addField("Anliegen", it, false) }
-                    ticket.authorAvatar?.let { setThumbnail(it) }
-                    setColor(COLOR_INFO)
-                    setTimestamp(Instant.now())
+            event.replyContainers(
+                container {
+                    accentColor = COLOR_INFO
+                    section(ticket.authorAvatar) {
+                        header("👤 User Info")
+                        text("<@${ticket.authorId}> (${ticket.authorName})")
+                    }
+                    divider()
+                    field("User-ID", ticket.authorId.toString())
+                    field("Ticket-Typ", "${ticket.ticketType.emoji} ${ticket.ticketType.displayName}")
+                    field("Erstellt", "<t:$createdEpoch:R>")
+                    field("Anliegen", ticket.ticketData["description"])
                 }
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
         }
@@ -229,14 +219,14 @@ class TicketButtonListener(
 
         val typeId = event.values.firstOrNull() ?: return
         val type = TicketType.fromId(typeId) ?: run {
-            event.replyEmbeds(errorEmbed("Fehler", "Ungültiger Ticket-Typ."))
+            event.replyContainers(errorContainer("Fehler", "Ungültiger Ticket-Typ."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
         if (type == TicketType.CONTENT_SUPPORT && !event.member.hasPermission(DiscordPermission.TICKET_CONTENT_CREATE)) {
-            event.replyEmbeds(
-                errorEmbed("Kein Zugriff", "Nur Content Creator können ein Content Support Ticket erstellen.")
+            event.replyContainers(
+                errorContainer("Kein Zugriff", "Nur Content Creator können ein Content Support Ticket erstellen.")
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
