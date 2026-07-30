@@ -59,8 +59,11 @@ class JdaListenerRegistrar(
 
             Commands.slash("missing-information", "Informiert den Ticket-Ersteller über fehlende Angaben"),
 
-            Commands.slash("deadline", "Setzt einen Antwort-Timer – Ticket wird automatisch geschlossen wenn keine Antwort kommt")
-                .addOption(OptionType.INTEGER, "minuten", "Zeit in Minuten bis das Ticket automatisch geschlossen wird", true),
+            Commands.slash("reply-deadline", "Setzt eine Antwort-Frist für einen User im Ticket")
+                .addOption(OptionType.USER, "user", "Der User, für den die Antwort-Frist gilt", true)
+                .addOption(OptionType.INTEGER, "until", "Frist in Stunden (Standard: 24)", false),
+
+            Commands.slash("deadline-notify", "Schaltet die DM-Benachrichtigung bei abgelaufenen Antwort-Fristen um"),
 
             Commands.slash("selfrole-panel", "Postet das Self-Role Panel im aktuellen Channel (nur Admins)"),
 

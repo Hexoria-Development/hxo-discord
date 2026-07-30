@@ -35,7 +35,7 @@ class TicketButtonListener(
 
     private fun handlePanelOpen(event: ButtonInteractionEvent) {
         val options = TicketType.entries.map { type ->
-            SelectOption.of("${type.emoji} ${type.displayName}", type.id)
+            SelectOption.of(type.displayName, type.id)
                 .withDescription(type.description)
         }
 
@@ -103,7 +103,7 @@ class TicketButtonListener(
             buttonMessage.updateTicketActionRow(claimed = true)
 
             event.hook.sendContainers(
-                infoContainer("Ticket übernommen", "${member.asMention} hat dieses Ticket übernommen. 🙋")
+                infoContainer("Ticket übernommen", "${member.asMention} hat dieses Ticket übernommen.")
             ).queue()
         }
     }
@@ -201,12 +201,12 @@ class TicketButtonListener(
                 container {
                     accentColor = COLOR_INFO
                     section(ticket.authorAvatar) {
-                        header("👤 User Info")
+                        header("User Info")
                         text("<@${ticket.authorId}> (${ticket.authorName})")
                     }
                     divider()
                     field("User-ID", ticket.authorId.toString())
-                    field("Ticket-Typ", "${ticket.ticketType.emoji} ${ticket.ticketType.displayName}")
+                    field("Ticket-Typ", ticket.ticketType.displayName)
                     field("Erstellt", "<t:$createdEpoch:R>")
                     field("Anliegen", ticket.ticketData["description"])
                 }

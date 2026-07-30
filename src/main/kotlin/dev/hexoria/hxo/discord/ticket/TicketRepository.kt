@@ -55,8 +55,11 @@ class TicketRepository(private val jdbc: JdbcTemplate) {
         jdbc.query("SELECT * FROM tickets WHERE thread_id = ?", rowMapper, threadId).firstOrNull()
     }
 
-    suspend fun findOpenByAuthor(authorId: Long): List<Ticket> = withContext(Dispatchers.IO) {
-        jdbc.query("SELECT * FROM tickets WHERE author_id = ? AND closed_at IS NULL", rowMapper, authorId)
+    suspend fun findOpenByAuthorAndType(authorId: Long, typeId: String): List<Ticket> = withContext(Dispatchers.IO) {
+        jdbc.query(
+            "SELECT * FROM tickets WHERE author_id = ? AND ticket_type = ? AND closed_at IS NULL",
+            rowMapper, authorId, typeId,
+        )
     }
 
     suspend fun close(

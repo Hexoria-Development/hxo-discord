@@ -68,7 +68,7 @@ enum class Faq(
             • Deaktiviere temporär deine Firewall / VPN
 
             **4. Falsche Server-IP**
-            Die korrekte IP lautet: **play.hexoria.net**
+            Die korrekte IP lautet: **Hexoria.net**
 
             Hilft nichts davon? Öffne ein **🎫 Support-Ticket** und teile deinen Log (F3 + C oder Logdatei).
         """.trimIndent()
@@ -119,7 +119,7 @@ enum class Faq(
             Bitte lies das Regelwerk auf der Webseite: https://hexoria.net/Regeln
             
             **Schritt 2 – Server beitreten**
-            Verbinde dich mit der IP: **play.hexoria.net**
+            Verbinde dich mit der IP: **Hexoria.net**
 
             Bei Fragen stehen wir dir gerne per **🎫 Support-Ticket** zur Verfügung. Viel Spaß!
         """.trimIndent()

@@ -40,12 +40,14 @@ class SelfRolePanelCommand : ListenerAdapter() {
         }
 
         val panel = container {
-            accentColor = COLOR_INFO
-            header("🔔 Ping-Rollen")
-            text("Klicke auf einen Button um eine Rolle zu erhalten oder zu entfernen.\n\n$lines")
+            section(null) {
+                header("Ping-Rollen")
+                text(
+                    "Klicke auf einen Button, um eine Rolle zu erhalten oder wieder zu entfernen.\n\n$lines"
+                )
+            }
             divider(Separator.Spacing.LARGE)
             buttons.chunked(5).forEach { row(ActionRow.of(it)) }
-            footer("Klicke erneut um die Rolle zu entfernen.")
         }
 
         event.channel.sendContainers(panel).queue()

@@ -28,7 +28,7 @@ class DiscordBot {
         builder.setMemberCachePolicy(MemberCachePolicy.ALL)
         builder.setChunkingFilter(ChunkingFilter.ALL)
         builder.setStatus(OnlineStatus.ONLINE)
-        builder.setActivity(Activity.playing("play.hexoria.net"))
+        builder.setActivity(Activity.playing("Hexoria.net"))
 
         val jda = builder.build()
 

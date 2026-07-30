@@ -1,6 +1,5 @@
 package dev.hexoria.hxo.discord.voice
 
-import dev.hexoria.hxo.discord.util.COLOR_INFO
 import dev.hexoria.hxo.discord.util.container
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.components.buttons.Button
@@ -26,18 +25,18 @@ const val VOICE_TRANSFER_SELECT = "voice:select:transfer"
 
 /** Die Willkommens-Nachricht im Info-Channel des Voice-Systems. */
 fun voiceInfoContainer(creatorChannelId: Long): Container = container {
-    accentColor = COLOR_INFO
-    header("🔊 Voice Channel System")
-    text(
-        "Willkommen beim Voice Channel System. Erstellen Sie Ihren eigenen Sprachkanal, indem Sie " +
-        creatorChannelMention(creatorChannelId) + " beitreten. " +
-        "Der Sprachkanal wird dann automatisch erstellt."
-    )
+    section(null) {
+        header("Voice Channel System")
+        text(
+            "Willkommen beim Voice Channel System.\n\n" +
+            "Erstelle deinen eigenen Sprachkanal, indem du " + creatorChannelMention(creatorChannelId) +
+            " beitrittst. Der Sprachkanal wird dann automatisch erstellt."
+        )
+    }
     divider(Separator.Spacing.LARGE)
     field(
-        "Management",
-        "Sobald Sie sich in Ihrem Sprachkanal befinden, wird dort eine Nachricht angezeigt, " +
-        "die Ihnen bei der Verwaltung hilft.",
+        "Verwaltung",
+        "Sobald du dich in deinem Sprachkanal befindest, erscheint dort eine Nachricht, die dir bei der Verwaltung hilft.",
     )
 }
 
@@ -52,42 +51,26 @@ fun voiceManagerContainer(channel: VoiceChannel, ownerId: Long?): Container {
     val everyone = channel.guild.publicRole
     val denied = channel.getPermissionOverride(everyone)?.denied.orEmpty()
     val locked = Permission.VOICE_CONNECT in denied
-    val hidden = Permission.VIEW_CHANNEL in denied
 
     return container {
-        accentColor = COLOR_INFO
-        header("🎛️ Kanal-Verwaltung")
-        text(
-            if (ownerId != null) "<@$ownerId>, hier verwalten Sie Ihren Sprachkanal **${channel.name}**."
-            else "Dieser Kanal hat aktuell keinen Besitzer. Mitglieder im Kanal können ihn beanspruchen."
-        )
-        divider(Separator.Spacing.LARGE)
-        field(
-            "Verfügbare Aktionen",
-            """
-            ✏️ **Umbenennen** – Namen des Kanals ändern
-            👥 **Limit** – Maximale Anzahl an Mitgliedern festlegen
-            ${if (locked) "🔓 **Entsperren** – Andere können wieder beitreten" else "🔒 **Sperren** – Niemand kann mehr beitreten"}
-            ${if (hidden) "👁️ **Anzeigen** – Kanal wieder sichtbar machen" else "🙈 **Verstecken** – Kanal für andere unsichtbar machen"}
-            👢 **Kicken** – Ein Mitglied aus dem Kanal entfernen
-            👑 **Übertragen** – Verwaltung an ein Mitglied abgeben
-            """.trimIndent(),
-        )
+        section(null) {
+            header("Sprachkanalverwaltung")
+            text(
+                if (ownerId != null) "Verwalte deinen eigenen Sprachkanal <@$ownerId>"
+                else "Dieser Kanal hat aktuell keinen Besitzer. Mitglieder im Kanal können ihn beanspruchen."
+            )
+        }
         divider(Separator.Spacing.LARGE)
         buttons(
             Button.secondary(VOICE_RENAME_BUTTON, "✏️ Umbenennen"),
-            Button.secondary(VOICE_LIMIT_BUTTON, "👥 Limit"),
-            if (locked) Button.success(VOICE_UNLOCK_BUTTON, "🔓 Entsperren")
-            else Button.secondary(VOICE_LOCK_BUTTON, "🔒 Sperren"),
-            if (hidden) Button.success(VOICE_SHOW_BUTTON, "👁️ Anzeigen")
-            else Button.secondary(VOICE_HIDE_BUTTON, "🙈 Verstecken"),
-        )
-        buttons(
-            Button.secondary(VOICE_KICK_BUTTON, "👢 Kicken"),
-            Button.secondary(VOICE_TRANSFER_BUTTON, "👑 Übertragen"),
-            Button.secondary(VOICE_CLAIM_BUTTON, "🙋 Beanspruchen"),
+            if (locked) Button.success(VOICE_UNLOCK_BUTTON, "🔓 Öffentlicher Kanal")
+            else Button.secondary(VOICE_LOCK_BUTTON, "🔒 Privater Kanal"),
+            Button.secondary(VOICE_LIMIT_BUTTON, "👥 Benutzerlimit setzen"),
+            Button.secondary(VOICE_KICK_BUTTON, "👢 Benutzer rauswerfen"),
             Button.danger(VOICE_DELETE_BUTTON, "🗑️ Löschen"),
         )
-        footer("Nur der Besitzer des Kanals kann diese Aktionen ausführen.")
+        if (ownerId == null) {
+            buttons(Button.success(VOICE_CLAIM_BUTTON, "🙋 Beanspruchen"))
+        }
     }
 }

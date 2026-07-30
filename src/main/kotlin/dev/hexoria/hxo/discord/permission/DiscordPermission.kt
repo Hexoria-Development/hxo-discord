@@ -25,6 +25,7 @@ enum class DiscordPermission {
     TICKET_CONTENT_CREATE,
 
     TICKET_TYPE_BYPASS,
+    TICKET_LIMIT_BYPASS,
 
     AUTOMOD_BYPASS,
 

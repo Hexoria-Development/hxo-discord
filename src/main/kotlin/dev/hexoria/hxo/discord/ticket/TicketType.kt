@@ -27,7 +27,6 @@ enum class TicketType(
     val id: String,
     val displayName: String,
     val description: String,
-    val emoji: String,
     val closeReasons: List<TicketCloseReason>,
     val viewPermission: DiscordPermission,
 ) {
@@ -35,7 +34,6 @@ enum class TicketType(
         id = "support",
         displayName = "Support",
         description = "Allgemeines Support-Ticket für dein Anliegen.",
-        emoji = "🎫",
         closeReasons = defaultCloseReasons,
         viewPermission = DiscordPermission.TICKET_SUPPORT_VIEW,
     ),
@@ -43,11 +41,10 @@ enum class TicketType(
         id = "report",
         displayName = "Report",
         description = "Melde einen Spieler oder einen Verstoß.",
-        emoji = "🚨",
         closeReasons = defaultCloseReasons,
         viewPermission = DiscordPermission.TICKET_REPORT_VIEW,
     ) {
-        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+        override fun createModal() = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
             textInput {
                 id = "reported_name"
                 label = "Name des gemeldeten Spielers"
@@ -94,7 +91,6 @@ enum class TicketType(
         id = "bug",
         displayName = "Bug Report",
         description = "Melde einen Fehler im System.",
-        emoji = "🐛",
         closeReasons = defaultCloseReasons + listOf(
             TicketCloseReason.of("confirmed", "Bestätigt", "Der Bug wurde bestätigt und wird behoben"),
             TicketCloseReason.of("fixed", "Behoben", "Der Bug wurde erfolgreich behoben"),
@@ -115,7 +111,6 @@ enum class TicketType(
         id = "unban",
         displayName = "Entbannungsantrag",
         description = "Stelle einen Antrag auf Entbannung.",
-        emoji = "⚖️",
         closeReasons = defaultCloseReasons + listOf(
             TicketCloseReason.of("unbanned", "Entbannt", "Der Spieler wurde entbannt"),
             TicketCloseReason.of("denied", "Abgelehnt", "Der Antrag wurde abgelehnt"),
@@ -123,7 +118,7 @@ enum class TicketType(
         ),
         viewPermission = DiscordPermission.TICKET_UNBAN_VIEW,
     ) {
-        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+        override fun createModal() = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
             textInput {
                 id = "punish_id"
                 label = "Punish-ID"
@@ -170,14 +165,13 @@ enum class TicketType(
         id = "bewerbung",
         displayName = "Team Bewerbung",
         description = "Bewirb dich als Teammitglied.",
-        emoji = "📋",
         closeReasons = defaultCloseReasons + listOf(
             TicketCloseReason.of("accepted", "Angenommen", "Die Bewerbung wurde angenommen"),
             TicketCloseReason.of("rejected", "Abgelehnt", "Die Bewerbung wurde abgelehnt"),
         ),
         viewPermission = DiscordPermission.TICKET_BEWERBUNG_VIEW,
     ) {
-        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+        override fun createModal() = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
             textInput {
                 id = "role"
                 label = "Für welche Rolle bewirbst du dich?"
@@ -234,11 +228,10 @@ enum class TicketType(
         id = "discord_support",
         displayName = "Discord Support",
         description = "Fragen zu Discord oder Nutzer melden.",
-        emoji = "💬",
         closeReasons = defaultCloseReasons,
         viewPermission = DiscordPermission.TICKET_DISCORD_VIEW,
     ) {
-        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+        override fun createModal() = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
             textInput {
                 id = "description"
                 label = "Dein Anliegen"
@@ -276,11 +269,10 @@ enum class TicketType(
         id = "event_support",
         displayName = "Event Support",
         description = "Probleme oder Fragen rund um Events.",
-        emoji = "🎉",
         closeReasons = defaultCloseReasons,
         viewPermission = DiscordPermission.TICKET_SUPPORT_VIEW,
     ) {
-        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+        override fun createModal() = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
             textInput {
                 id = "event_name"
                 label = "Event Name"
@@ -317,11 +309,10 @@ enum class TicketType(
         id = "content_support",
         displayName = "Content Support",
         description = "Support für Content Creator.",
-        emoji = "🎬",
         closeReasons = defaultCloseReasons,
         viewPermission = DiscordPermission.TICKET_CONTENT_VIEW,
     ) {
-        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+        override fun createModal() = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
             textInput {
                 id = "content_type"
                 label = "Art des Contents"
@@ -358,14 +349,13 @@ enum class TicketType(
         id = "team_report",
         displayName = "Team Report",
         description = "Fehlverhalten eines Teammitglieds melden.",
-        emoji = "🛡️",
         closeReasons = defaultCloseReasons + listOf(
             TicketCloseReason.of("action_taken", "Maßnahme ergriffen", "Es wurden entsprechende Maßnahmen eingeleitet"),
             TicketCloseReason.of("unfounded", "Unbegründet", "Der Bericht war nicht ausreichend begründet"),
         ),
         viewPermission = DiscordPermission.TICKET_TEAM_VIEW,
     ) {
-        override fun createModal() = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+        override fun createModal() = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
             textInput {
                 id = "team_member"
                 label = "Betroffenes Teammitglied"
@@ -410,7 +400,7 @@ enum class TicketType(
         }
     };
 
-    open fun createModal(): Modal = modal("ticket:modal:$id", "$emoji $displayName – Ticket erstellen") {
+    open fun createModal(): Modal = modal("ticket:modal:$id", "$displayName – Ticket erstellen") {
         textInput {
             id = "description"
             label = "Dein Anliegen"
@@ -434,7 +424,7 @@ enum class TicketType(
         field("Dein Anliegen", data["description"])
     }
 
-    fun toButton(): Button = Button.secondary("ticket:open:$id", "$emoji $displayName")
+    fun toButton(): Button = Button.secondary("ticket:open:$id", displayName)
 
     companion object {
         fun fromId(id: String): TicketType? = entries.firstOrNull { it.id == id }

@@ -54,6 +54,7 @@ class TicketCloseReasonListener(
                 closedByName   = member.user.name,
                 closedByAvatar = member.user.effectiveAvatarUrl,
                 reason         = reason,
+                thread         = thread,
             )
 
             event.hook.editContainers(

@@ -32,9 +32,10 @@ class ReactionRolePanelCommand : ListenerAdapter() {
         val lines = roles.joinToString("\n") { r -> "${r.emoji} = <@&${r.roleId}>" }
 
         val panel = container {
-            accentColor = COLOR_INFO
-            header("Hol dir deine Rolle")
-            text(lines)
+            section(null) {
+                header("Hol dir deine Rolle")
+                text(lines)
+            }
             footer(REACTION_ROLE_PANEL_FOOTER)
         }
 

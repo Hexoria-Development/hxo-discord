@@ -46,14 +46,14 @@ class TicketModalListener(
                 event.hook.editContainers(
                     errorContainer(
                         "Ticket konnte nicht erstellt werden",
-                        "Du hast bereits ein offenes Ticket oder der Ticket-Channel ist nicht konfiguriert.",
+                        "Du hast bereits ein offenes **${type.displayName}**-Ticket oder der Ticket-Channel ist nicht konfiguriert.",
                     )
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
             } else {
                 event.hook.editContainers(
                     successContainer(
                         "Ticket erstellt",
-                        "Dein Ticket **#${ticket.internalTicketId}** wurde erstellt! <#${ticket.threadId}>",
+                        "Dein Ticket wurde erstellt! <#${ticket.threadId}>",
                     )
                 ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
             }

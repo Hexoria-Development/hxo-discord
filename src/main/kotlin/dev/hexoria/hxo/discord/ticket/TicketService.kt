@@ -2,6 +2,7 @@ package dev.hexoria.hxo.discord.ticket
 
 import dev.hexoria.hxo.discord.permission.DiscordPermission
 import dev.hexoria.hxo.discord.permission.getRolesWithPermission
+import dev.hexoria.hxo.discord.permission.hasPermission
 import dev.hexoria.hxo.discord.util.*
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
@@ -38,18 +39,19 @@ class TicketService(
             return null
         }
 
-        val existingOpen = ticketRepository.findOpenByAuthor(authorId)
-        if (existingOpen.isNotEmpty()) {
-            logger.warn("User $authorId hat bereits ${existingOpen.size} offenes Ticket.")
-            return null
+        if (!author.hasPermission(DiscordPermission.TICKET_LIMIT_BYPASS)) {
+            val existingOpen = ticketRepository.findOpenByAuthorAndType(authorId, type.id)
+            if (existingOpen.isNotEmpty()) {
+                logger.warn("User $authorId hat bereits ein offenes ${type.id}-Ticket.")
+                return null
+            }
         }
 
         val ticketId = UUID.randomUUID()
         val internalCounter = ticketRepository.count() + 1
 
-        val userTicketNumber = (existingOpen.size + 1).toString().padStart(2, '0')
         val thread: ThreadChannel = channel
-            .createThreadChannel("${type.id}-${authorName}-${internalCounter}", true)
+            .createThreadChannel("${type.id.substringBefore('_')}-$authorName", true)
             .setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_1_WEEK)
             .complete()
 
@@ -87,17 +89,16 @@ class TicketService(
     }
 
     /**
-     * Gibt allen Mitgliedern der Rollen Zugriff auf den Thread.
+     * Pingt die Rollen im Thread und gibt damit allen Mitgliedern Zugriff.
      *
-     * Die Nachricht wird ohne Mention gesendet und erst danach zum Rollen-Ping editiert – so werden
-     * die Mitglieder der Rolle dem Thread hinzugefügt, ohne dass eine Benachrichtigung ausgelöst
-     * wird. Anschließend wird die Nachricht wieder gelöscht.
+     * Der Rollen-Ping wird direkt gesendet – dadurch werden die Mitglieder benachrichtigt und dem
+     * Thread hinzugefügt, ohne dass die System-Meldung „hat X zum Thread hinzugefügt“ erscheint.
+     * Anschließend wird die Nachricht wieder gelöscht.
      */
     private fun addRoles(thread: ThreadChannel, roleIds: Collection<Long>) {
         for (roleId in roleIds) {
             runCatching {
-                val message = thread.sendMessage("Berechtige Rolle $roleId …").complete()
-                message.editMessage("<@&$roleId>").complete()
+                val message = thread.sendMessage("<@&$roleId>").complete()
                 message.delete().complete()
             }.onFailure {
                 logger.warn("Rolle $roleId konnte keinen Zugriff auf Thread ${thread.id} erhalten.", it)
@@ -111,10 +112,11 @@ class TicketService(
         closedByName: String,
         closedByAvatar: String?,
         reason: TicketCloseReason,
+        thread: ThreadChannel? = null,
     ) {
-        val thread = ticket.getThreadChannel(jda) ?: run {
-            logger.warn("Thread für Ticket ${ticket.ticketId} nicht gefunden.")
-            return
+        val resolvedThread = thread ?: ticket.getThreadChannel(jda)
+        if (resolvedThread == null) {
+            logger.warn("Thread für Ticket ${ticket.ticketId} nicht gefunden – Ticket wird nur in der Datenbank geschlossen.")
         }
 
         val closedAt = LocalDateTime.now()
@@ -130,32 +132,36 @@ class TicketService(
 
         val closedAtInstant = closedAt.toInstant(ZoneOffset.UTC)
 
-        thread.sendContainers(
-            container {
-                accentColor = COLOR_ERROR
-                header("🔒 Ticket geschlossen")
-                text("Dieses Ticket wurde von **$closedByName** geschlossen.")
-                divider(Separator.Spacing.LARGE)
-                field("Grund", reason.displayName)
-                field("Beschreibung", reason.description)
-                divider(Separator.Spacing.LARGE)
-                field("Ticket-Typ", "${ticket.ticketType.emoji} ${ticket.ticketType.displayName}")
-                field("Ersteller", "<@${ticket.authorId}>")
-                field("Geschlossen von", "<@$closedById>")
-                field("Zeitpunkt", "<t:${closedAtInstant.epochSecond}:F>")
-                footer("Ticket-ID: ${ticket.ticketId}")
-            }
-        ).setAllowedMentions(emptyList()).complete()
+        resolvedThread?.let { thread ->
+            thread.sendContainers(
+                container {
+                    accentColor = COLOR_ERROR
+                    section(closedByAvatar) {
+                        header("Ticket geschlossen")
+                        text("Dieses Ticket wurde von **$closedByName** geschlossen.")
+                    }
+                    divider(Separator.Spacing.LARGE)
+                    field("Grund", reason.displayName)
+                    field("Beschreibung", reason.description)
+                    divider(Separator.Spacing.LARGE)
+                    field("Ticket-Typ", ticket.ticketType.displayName)
+                    field("Ersteller", "<@${ticket.authorId}>")
+                    field("Geschlossen von", "<@$closedById>")
+                    field("Zeitpunkt", "<t:${closedAtInstant.epochSecond}:F>")
+                    footer("Ticket-ID: ${ticket.ticketId}")
+                }
+            ).setAllowedMentions(emptyList()).complete()
+
+            thread.manager
+                .setLocked(true)
+                .setArchived(true)
+                .queue()
+        }
 
         val author = jda.getGuildById(ticket.guildId)?.getMemberById(ticket.authorId)
         if (author != null) {
             ticketChannel?.getPermissionOverride(author)?.delete()?.queue()
         }
-
-        thread.manager
-            .setLocked(true)
-            .setArchived(true)
-            .queue()
 
         logger.info("Ticket ${ticket.ticketId} von $closedByName geschlossen. Grund: ${reason.id}")
     }

@@ -147,6 +147,29 @@ class DatabaseConfiguration {
         """.trimIndent())
 
         jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS ticket_reply_deadlines (
+                id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+                ticket_id        VARCHAR(36)  NOT NULL,
+                thread_id        BIGINT       NOT NULL,
+                target_user_id   BIGINT       NOT NULL,
+                target_user_name VARCHAR(255) NOT NULL,
+                set_by_id        BIGINT       NOT NULL,
+                set_by_name      VARCHAR(255) NOT NULL,
+                deadline         DATETIME     NOT NULL,
+                INDEX idx_trd_thread   (thread_id),
+                INDEX idx_trd_deadline (deadline)
+            )
+        """.trimIndent())
+
+        jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS deadline_notify (
+                user_id BIGINT  NOT NULL,
+                enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                PRIMARY KEY (user_id)
+            )
+        """.trimIndent())
+
+        jdbc.execute("""
             CREATE TABLE IF NOT EXISTS counting_state (
                 guild_id      BIGINT   NOT NULL,
                 current_count BIGINT   NOT NULL DEFAULT 0,

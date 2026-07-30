@@ -2,46 +2,50 @@ package dev.hexoria.hxo.discord.ticket.command
 
 import dev.hexoria.hxo.discord.permission.DiscordPermission
 import dev.hexoria.hxo.discord.permission.hasPermission
-import dev.hexoria.hxo.discord.ticket.TicketDeadlineService
 import dev.hexoria.hxo.discord.ticket.TicketService
+import dev.hexoria.hxo.discord.ticket.deadline.ReplyDeadlineService
 import dev.hexoria.hxo.discord.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.springframework.stereotype.Component
-import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 @Component
-class TicketDeadlineCommand(
+class TicketReplyDeadlineCommand(
     private val ticketService: TicketService,
-    private val deadlineService: TicketDeadlineService,
+    private val replyDeadlineService: ReplyDeadlineService,
     private val coroutineScope: CoroutineScope,
 ) : ListenerAdapter() {
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        if (event.name != "deadline") return
+        if (event.name != "reply-deadline") return
 
         if (!event.member.hasPermission(DiscordPermission.COMMAND_TICKET_DEADLINE)) {
             event.replyContainers(
-                errorContainer("Keine Berechtigung", "Du hast keine Berechtigung, einen Antwort-Timer zu setzen.")
+                errorContainer("Keine Berechtigung", "Du hast keine Berechtigung, eine Antwort-Frist zu setzen.")
             ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
-        val minutes = event.getOption("minuten")?.asLong ?: run {
-            event.replyContainers(errorContainer("Fehler", "Keine Minutenanzahl angegeben."))
+        val target = event.getOption("user")?.asUser ?: run {
+            event.replyContainers(errorContainer("Fehler", "Kein User angegeben."))
                 .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
-        if (minutes < 1 || minutes > 10080) {
-            event.replyContainers(errorContainer("Ungültige Zeit", "Die Zeit muss zwischen 1 und 10080 Minuten (7 Tage) liegen."))
-                .setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
+        val hours = event.getOption("until")?.asLong ?: 24
+
+        if (hours < 1 || hours > 8766) {
+            event.replyContainers(
+                errorContainer("Ungültige Zeit", "Die Frist muss zwischen 1 und 8766 Stunden (1 Jahr) liegen.")
+            ).setEphemeral(true).queue { hook -> hook.deleteOriginalAfter(coroutineScope) }
             return
         }
 
-        event.deferReply(false).queue()
+        event.deferReply(true).queue()
 
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: run {
@@ -58,21 +62,25 @@ class TicketDeadlineCommand(
                 return@launch
             }
 
-            deadlineService.schedule(ticket, minutes)
+            val deadline = LocalDateTime.now().plusHours(hours)
+            val deadlineEpoch = deadline.toInstant(ZoneOffset.UTC).epochSecond
 
-            val deadlineTimestamp = Instant.now().plusSeconds(minutes * 60)
+            replyDeadlineService.createDeadline(ticket, target, event.user, deadline)
 
-            event.hook.editContainers(container {
+            event.hook.editContainers(
+                successContainer("Antwort-Frist gesetzt", "Die Antwort-Frist wurde gesendet.")
+            ).queue { event.hook.deleteOriginalAfter(coroutineScope) }
+
+            event.channel.sendContainers(container {
                 accentColor = COLOR_WARNING
-                header("⏰ Antwort-Timer gesetzt")
-                text(
-                    """
-                    <@${ticket.authorId}>, du hast **$minutes Minuten** Zeit zu antworten.
-
-                    Wenn bis <t:${deadlineTimestamp.epochSecond}:F> keine Antwort eingeht, wird das Ticket automatisch geschlossen.
-                    """.trimIndent()
-                )
-                footer("Gesetzt von ${event.member!!.user.name}", now)
+                section(null) {
+                    header("Antwort-Frist")
+                    text(
+                        "${target.asMention}, bitte antworte bis <t:$deadlineEpoch:F> (<t:$deadlineEpoch:R>) " +
+                        "in diesem Ticket, sonst kann es geschlossen werden."
+                    )
+                }
+                footer("Gesetzt von ${event.user.name}")
             }).queue()
         }
     }

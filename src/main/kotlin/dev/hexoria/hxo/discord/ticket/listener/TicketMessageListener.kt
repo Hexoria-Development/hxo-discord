@@ -1,6 +1,7 @@
 package dev.hexoria.hxo.discord.ticket.listener
 
 import dev.hexoria.hxo.discord.ticket.*
+import dev.hexoria.hxo.discord.ticket.deadline.ReplyDeadlineService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -12,7 +13,7 @@ import java.time.LocalDateTime
 class TicketMessageListener(
     private val ticketService: TicketService,
     private val messageRepository: TicketMessageRepository,
-    private val deadlineService: TicketDeadlineService,
+    private val replyDeadlineService: ReplyDeadlineService,
     private val coroutineScope: CoroutineScope,
 ) : ListenerAdapter() {
 
@@ -23,10 +24,9 @@ class TicketMessageListener(
         coroutineScope.launch {
             val ticket = ticketService.getTicketByThreadId(event.channel.idLong) ?: return@launch
 
-            deadlineService.cancelIfAuthorResponded(
-                threadId      = event.channel.idLong,
-                senderId      = event.author.idLong,
-                ticketAuthorId = ticket.authorId,
+            replyDeadlineService.onUserReplied(
+                threadId = event.channel.idLong,
+                userId   = event.author.idLong,
             )
 
             val attachments = event.message.attachments

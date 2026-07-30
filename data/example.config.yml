@@ -53,3 +53,4 @@ autoRoles:
   - 123456789012345678   # Rolle, die beim Betreten automatisch vergeben wird
   - 123456789012345679   # weitere Auto-Rolle (beliebig viele möglich)
 
+     

@@ -1,6 +1,5 @@
 package dev.hexoria.hxo.discord.ticket
 
-import dev.hexoria.hxo.discord.util.COLOR_INFO
 import dev.hexoria.hxo.discord.util.container
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.buttons.Button
@@ -17,31 +16,35 @@ const val TICKET_USERINFO_BUTTON = "ticket:userinfo"
 
 /** Buttons unter dem Ticket-Container. Vor dem Claim kann übernommen, danach freigegeben werden. */
 fun ticketActionRow(claimed: Boolean): ActionRow = ActionRow.of(
-    if (claimed) Button.danger(TICKET_UNCLAIM_BUTTON, "🔓 Claim freigeben")
-    else Button.success(TICKET_CLAIM_BUTTON, "🙋 Ticket übernehmen"),
-    Button.danger(TICKET_CLOSE_BUTTON, "🔒 Schließen"),
-    Button.secondary(TICKET_USERINFO_BUTTON, "👤 User Info"),
+    if (claimed) Button.danger(TICKET_UNCLAIM_BUTTON, "Claim freigeben")
+    else Button.success(TICKET_CLAIM_BUTTON, "Ticket übernehmen"),
+    Button.danger(TICKET_CLOSE_BUTTON, "Schließen"),
+    Button.secondary(TICKET_USERINFO_BUTTON, "User Info"),
 )
 
 /** Das Panel, über das Tickets erstellt werden – wird beim Start und per `/ticket-panel` gepostet. */
 fun ticketPanelContainer(): Container = container {
-    accentColor = COLOR_INFO
-    header("Ticket erstellen")
+    section(null) {
+        header("Ticket erstellen")
+        text(
+            """
+            Du möchtest einen Spieler bzw. ein Problem melden oder einen Entbannungsantrag für den Server erstellen, so kannst du hier ein Ticket erstellen.
+
+            Bitte mache dich vorher mit den unterschiedlichen Tickettypen vertraut!
+            Die Übersicht findest du hier: https://hexoria.net/Support
+            """.trimIndent()
+        )
+    }
+    divider(Separator.Spacing.LARGE)
     text(
         """
-        Du möchtest einen Spieler bzw. ein Problem melden oder einen Entbannungsantrag für den Server erstellen, so kannst du hier ein Ticket erstellen.
-
-        Bitte mache dich vorher mit den unterschiedlichen Tickettypen vertraut!
-        Die Übersicht findest du hier: https://hexoria.net/Support
-
         Allgemeine Fragen sollten in den dafür vorgesehenen öffentlichen Kanälen gestellt werden.
 
         Wir bemühen uns die Tickets schnellstmöglich zu bearbeiten, jedoch arbeitet das gesamte Team freiwillig, und gerade unter der Woche kann die Bearbeitung der Tickets länger dauern.
         """.trimIndent()
     )
     divider(Separator.Spacing.LARGE)
-    buttons(Button.success(TICKET_PANEL_BUTTON, "🎫 Ticket öffnen"))
-    footer("Support-System")
+    buttons(Button.success(TICKET_PANEL_BUTTON, "Ticket öffnen"))
 }
 
 /**
@@ -50,12 +53,10 @@ fun ticketPanelContainer(): Container = container {
  */
 fun buildTicketContainer(ticket: Ticket, claimed: Boolean = false): Container {
     val type = ticket.ticketType
-    val number = ticket.internalTicketId?.let { " – Ticket #$it" } ?: ""
 
     return container {
-        accentColor = COLOR_INFO
         section(ticket.authorAvatar) {
-            header("${type.emoji} ${type.displayName}$number")
+            header(type.displayName)
             text(type.welcomeText(ticket.authorId))
         }
         for (entry in type.displayFields(ticket.ticketData)) {

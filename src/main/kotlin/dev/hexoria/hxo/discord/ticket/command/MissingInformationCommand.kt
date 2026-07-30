@@ -50,7 +50,7 @@ class MissingInformationCommand(
 
             event.channel.asThreadChannel().sendContainers(container {
                 accentColor = COLOR_WARNING
-                header("⚠️ Fehlende Informationen")
+                header("Fehlende Informationen")
                 text(
                     """
                     <@${ticket.authorId}>, dein Ticket kann aktuell nicht bearbeitet werden, da **wichtige Informationen fehlen**.
@@ -64,7 +64,7 @@ class MissingInformationCommand(
                     "Folgende Informationen könnten fehlen",
                     "- Spieler-Name\n- Koordinaten\n- Problembeschreibung\n- Ungenaue Angaben",
                 )
-                footer("Ticket #${ticket.internalTicketId}", now)
+                footer("Ticket-ID: ${ticket.ticketId}", now)
             }).queue()
 
             event.hook.deleteOriginal().queue()
